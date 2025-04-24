@@ -1,0 +1,151 @@
+{
+  "name": "parameters-decorator",
+  "version": "0.0.0",
+  "description": "A method decorator to bring parameter decorators to ECMAScript (based on the TC39 proposal)",
+  "keywords": [
+    "decorators",
+    "parameters"
+  ],
+  "homepage": "https://github.com/tbroyer/es-parameters-decorator#readme",
+  "bugs": {
+    "url": "https://github.com/tbroyer/es-parameters-decorator/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/tbroyer/es-parameters-decorator.git"
+  },
+  "license": "BSD-3-Clause",
+  "author": "Thomas Broyer <t.broyer@ltgt.net>",
+  "type": "module",
+  "exports": {
+    ".": "./index.js"
+  },
+  "main": "index.js",
+  "types": "index.d.ts",
+  "files": [
+    "index.js",
+    "index.d.ts"
+  ],
+  "scripts": {
+    "format": "wireit",
+    "lint": "wireit",
+    "test": "wireit",
+    "test:babel": "wireit",
+    "test:ts": "wireit",
+    "test:types": "wireit"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.27.0",
+    "@babel/core": "^7.26.10",
+    "@babel/plugin-proposal-decorators": "^7.25.9",
+    "@babel/plugin-syntax-typescript": "^7.25.9",
+    "@types/node": "^22.14.1",
+    "eslint": "^9.25.0",
+    "eslint-plugin-package-json": "^0.29.1",
+    "prettier": "^3.5.3",
+    "tstyche": "^4.0.0-beta.6",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.31.0",
+    "wireit": "^0.14.12"
+  },
+  "wireit": {
+    "format": {
+      "command": "prettier -w .",
+      "files": [
+        ".prettierignore",
+        "**/*.js",
+        "**/*.ts",
+        "!test-babel/",
+        "!test-typescript/",
+        "*.json",
+        "!package-lock.json"
+      ]
+    },
+    "lint": {
+      "dependencies": [
+        "lint:prettier",
+        "lint:eslint"
+      ]
+    },
+    "lint:prettier": {
+      "command": "prettier -l .",
+      "files": [
+        ".prettierignore",
+        "**/*.js",
+        "**/*.ts",
+        "!test-babel/",
+        "!test-typescript/",
+        "*.json",
+        "!package-lock.json"
+      ]
+    },
+    "lint:eslint": {
+      "command": "eslint .",
+      "files": [
+        "eslint.config.js",
+        "**/package.json",
+        "**/*.js",
+        "**/*.ts",
+        "!test-babel/",
+        "!test-typescript/"
+      ]
+    },
+    "test": {
+      "dependencies": [
+        "test:types",
+        "test:ts",
+        "test:babel"
+      ]
+    },
+    "test:types": {
+      "command": "tstyche",
+      "files": [
+        "*.d.ts",
+        "*.tst.ts"
+      ]
+    },
+    "test:ts": {
+      "dependencies": [
+        "tsc"
+      ],
+      "command": "node --test 'test-typescript/**/*.js'",
+      "files": [
+        "index.js",
+        "test-typescript/"
+      ]
+    },
+    "tsc": {
+      "command": "tsc -p tsconfig.test.json",
+      "files": [
+        "tsconfig.common.json",
+        "tsconfig.test.json",
+        "index.js",
+        "index.ts",
+        "test/"
+      ],
+      "output": [
+        "test-typescript/"
+      ]
+    },
+    "test:babel": {
+      "dependencies": [
+        "babel"
+      ],
+      "command": "node --experimental-strip-types --disable-warning=ExperimentalWarning --test 'test-babel/**/*.ts'",
+      "files": [
+        "index.js",
+        "test-babel/"
+      ]
+    },
+    "babel": {
+      "command": "babel --extensions .ts --keep-file-extension --out-dir test-babel/ test/",
+      "files": [
+        "babel.config.json",
+        "test/"
+      ],
+      "output": [
+        "test-babel/"
+      ]
+    }
+  }
+}
