@@ -5,6 +5,7 @@ import {
   parameter,
   optional,
   rest,
+  defaultValue,
   type ClassMethodParameterDecoratorContext,
 } from "parameters-decorator";
 
@@ -412,4 +413,31 @@ void test("rest", () => {
     [true, true],
     [["foo", "bar", "baz"], "foo", "bar", "baz", ["foo", "bar", "baz"]],
   ]);
+});
+
+void test("defaultValue", () => {
+  const RECORDED_DATA = Symbol();
+  function record<This extends { [RECORDED_DATA]: number[] }>(
+    _: undefined, // eslint-disable-line @typescript-eslint/no-unused-vars
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    context: ClassMethodParameterDecoratorContext<This>,
+  ) {
+    return function (this: This, value: number) {
+      this[RECORDED_DATA].push(value);
+      return value;
+    };
+  }
+  class Sut {
+    [RECORDED_DATA]: number[] = [];
+
+    @parameters<Sut>(undefined, [record, defaultValue(0), record])
+    fn(a: string, b: number = 42) {
+      this[RECORDED_DATA].push(b);
+    }
+  }
+
+  const sut = new Sut();
+  sut.fn("ignored");
+
+  assert.deepEqual(sut[RECORDED_DATA], [undefined, 0, 0]);
 });

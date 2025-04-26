@@ -3,6 +3,7 @@ import {
   parameters,
   parameter,
   rest,
+  defaultValue,
   type ClassMethodParameterDecoratorContext,
 } from "parameters-decorator";
 
@@ -220,5 +221,19 @@ test("rest", () => {
     // @(expect(parameters<Sut>(boolean, rest(string))).type.not.toBeApplicable)
     // @(expect(parameters<Sut>(boolean, [false, rest(string)])).type.not.toBeApplicable)
     fn(a: boolean, ...b: string[]) {}
+  }
+});
+
+test("defaultValue", () => {
+  @(expect(parameters(defaultValue(-1))).type.toBeApplicable)
+  class Sut {
+    constructor(a: number) {}
+
+    // XXX: must be explicit, but This type argument is enough
+    @(expect(parameters<Sut>(defaultValue(-1))).type.toBeApplicable)
+    fn(a: number) {}
+
+    @(expect(parameter(defaultValue(-1))).type.toBeApplicable)
+    set prop(a: number) {}
   }
 });

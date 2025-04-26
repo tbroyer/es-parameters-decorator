@@ -62,6 +62,18 @@ export function parameter(...decorators) {
   };
 }
 
+/** @type {import("./index.js").defaultValue} */
+export function defaultValue(def) {
+  return function (_, context) {
+    if (context.kind !== "parameter") {
+      throw unsupportedDecoratorLocation(context);
+    }
+    return function (value) {
+      return value ?? def;
+    };
+  };
+}
+
 /** @type {import("./index.js").optional} */
 export function optional(...decorators) {
   return function (_, context) {

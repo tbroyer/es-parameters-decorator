@@ -107,6 +107,10 @@ export declare function parameter<This = unknown, Value = unknown>(decorators: {
   context: ClassSetterDecoratorContext<This, Value>,
 ) => ((this: This, value: Value) => void) | void;
 
+export declare function defaultValue<This, Value>(
+  value: Value,
+): ClassMethodParameterDecorator<This, Value>;
+
 export declare function optional<This, Value>(
   ...decorators: ClassMethodParameterDecorator<This, Value>[]
 ): ClassMethodParameterDecorator<This, Value | undefined>;
