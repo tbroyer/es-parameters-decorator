@@ -54,14 +54,25 @@ type ClassMethodParameterDecorators<This = unknown, Value = unknown> =
   | [name: string, ...decorators: ClassMethodParameterDecorator<This, Value>[]]
   | [
       name: string,
-      rest: boolean,
+      rest: false,
       ...decorators: ClassMethodParameterDecorator<This, Value>[],
     ]
-  | [rest: boolean, ...decorators: ClassMethodParameterDecorator<This, Value>[]]
+  | [
+      name: string,
+      rest: true,
+      ...decorators: ClassMethodParameterDecorator<This, Value[]>[],
+    ]
+  | [rest: false, ...decorators: ClassMethodParameterDecorator<This, Value>[]]
+  | [rest: true, ...decorators: ClassMethodParameterDecorator<This, Value[]>[]]
   | {
       name?: string | undefined;
-      rest?: boolean | undefined;
+      rest?: false | undefined;
       decorators: ClassMethodParameterDecorator<This, Value>[];
+    }
+  | {
+      name?: string | undefined;
+      rest: true;
+      decorators: ClassMethodParameterDecorator<This, Value[]>[];
     };
 
 type RemapMethodParametersToDecorators<This, Params extends unknown[]> = {
@@ -220,7 +231,6 @@ export declare function optional<This, Value>(
  * @template Value The type of the decorated parameter.
  * @param decorators The parameter decorators to apply to all the rest argument values.
  */
-// TODO: should return …<…, Value[]> rather than …<…, Value>
 export declare function rest<This, Value>(
   ...decorators: ClassMethodParameterDecorator<This, Value>[]
-): ClassMethodParameterDecorator<This, Value>;
+): ClassMethodParameterDecorator<This, Value[]>;
