@@ -36,15 +36,11 @@ class Cls {
 can be written using the `parameters` decorator as (examplifying the various forms):
 
 ```js
-@parameters(A, undefined, [B, C])
+@parameters(A, undefined, { name: "param3", decorators: [B, C] })
 class Cls {
   constructor(param1, param2, param3) {}
 
-  @parameters(["param1", D, E], { name: "param2", decorators: [F, G] }, [
-    "rest",
-    true,
-    H,
-  ])
+  @parameters(["param1", D, E], [F, G], ["rest", true, H])
   method(param1, param2, ...rest) {}
 }
 ```
