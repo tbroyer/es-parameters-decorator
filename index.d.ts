@@ -19,19 +19,27 @@ export interface ClassMethodParameterDecoratorContext<This = unknown> {
   readonly rest: boolean;
 
   /** Contains limited information about the function to which the parameter belongs. */
-  readonly function: {
-    /** The kind of class element that was decorated. */
-    readonly type: "class" | "method" | "setter";
+  readonly function:
+    | {
+        /** The kind of element that was decorated. */
+        readonly type: "class";
 
-    /** The name of the decorated class element. */
-    readonly name: string | symbol | undefined;
+        /** The name of the decorated class. */
+        readonly name: string | undefined;
+      }
+    | {
+        /** The kind of class element that was decorated. */
+        readonly type: "method" | "setter";
 
-    /** A value indicating whether the class element is a static (`true`) or instance (`false`) element. Only present if `function.kind` is not `"class"`. */
-    readonly static?: boolean | undefined;
+        /** The name of the decorated class element. */
+        readonly name: string | symbol;
 
-    /** A value indicating whether the class element has a private name. Only present if `function.kind` is not `"class"`. */
-    readonly private?: boolean | undefined;
-  };
+        /** A value indicating whether the class element is a static (`true`) or instance (`false`) element. */
+        readonly static: boolean;
+
+        /** A value indicating whether the class element has a private name. */
+        readonly private: boolean;
+      };
 
   /**
    * Adds a callback to be invoked either after static methods are defined but before
