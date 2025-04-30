@@ -22,14 +22,14 @@ export interface ClassMethodParameterDecoratorContext<This = unknown> {
   readonly function:
     | {
         /** The kind of element that was decorated. */
-        readonly type: "class";
+        readonly kind: "class";
 
         /** The name of the decorated class. */
         readonly name: string | undefined;
       }
     | {
         /** The kind of class element that was decorated. */
-        readonly type: "method" | "setter";
+        readonly kind: "method" | "setter";
 
         /** The name of the decorated class element. */
         readonly name: string | symbol;
