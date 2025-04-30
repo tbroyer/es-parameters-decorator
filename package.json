@@ -1,6 +1,6 @@
 {
   "name": "parameters-decorator",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "description": "A method decorator to bring parameter decorators to ECMAScript (based on the TC39 proposal)",
   "keywords": [
     "decorators",
