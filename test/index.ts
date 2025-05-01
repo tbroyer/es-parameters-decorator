@@ -418,8 +418,7 @@ void test("rest", () => {
 void test("defaultValue", () => {
   const RECORDED_DATA = Symbol();
   function record<This extends { [RECORDED_DATA]: number[][] }>(
-    _: undefined, // eslint-disable-line @typescript-eslint/no-unused-vars
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    _: undefined,
     { index }: ClassMethodParameterDecoratorContext<This>,
   ) {
     return function (this: This, value: number) {
