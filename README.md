@@ -78,10 +78,10 @@ new Cls().method("one", "two", "three");
 
 ### @defaultValue()
 
-The `defaultValue` parameter decorator allows assigning a default value to an optional parameter _before_ other decorators are applied.
-Because decorators are applied from last to first, this decorator should generally come last.
+The `defaultValue` parameter decorator allows assigning a default value to an optional parameter _before_ other decorators (parameter or class/method/setter) are applied.
+Because decorators are applied first-to-last, this decorator should generally come first.
 
-If other decorators don't need to see that default value, then you should prefer the native _default parameter value_ syntax in the function declaration.
+If other decorators (parameter or class/method/setter) don't need to see that default value, then you should prefer the native _default parameter value_ syntax in the function declaration.
 In TypeScript, you'll want to use both to get the appropriate typing for the method (but note that the value declared in the function signature will actually be ignored).
 
 ```js
@@ -91,7 +91,7 @@ class Cls {
   method1(param = -1) {}
 
   // The decorator will never see an `undefined` value
-  @parameters([A, defaultValue(-1)])
+  @parameters([defaultValue(-1), A])
   method(param) {}
 }
 ```

@@ -373,11 +373,11 @@ void test("optional", () => {
 
   const sut = new Sut();
   sut.fn();
-  assert.deepEqual(sut[RECORDED_DATA], ["third", "first"]);
+  assert.deepEqual(sut[RECORDED_DATA], ["first", "third"]);
 
   sut[RECORDED_DATA] = [];
   sut.fn(42);
-  assert.deepEqual(sut[RECORDED_DATA], ["third", "second", "first"]);
+  assert.deepEqual(sut[RECORDED_DATA], ["first", "second", "third"]);
 });
 
 void test("rest", () => {
@@ -411,33 +411,37 @@ void test("rest", () => {
     ["a", "a"],
     [42, 42],
     [true, true],
-    [["foo", "bar", "baz"], "foo", "bar", "baz", ["foo", "bar", "baz"]],
+    ["foo", "bar", "baz", ["foo", "bar", "baz"], ["foo", "bar", "baz"]],
   ]);
 });
 
 void test("defaultValue", () => {
   const RECORDED_DATA = Symbol();
-  function record<This extends { [RECORDED_DATA]: number[] }>(
+  function record<This extends { [RECORDED_DATA]: number[][] }>(
     _: undefined, // eslint-disable-line @typescript-eslint/no-unused-vars
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    context: ClassMethodParameterDecoratorContext<This>,
+    { index }: ClassMethodParameterDecoratorContext<This>,
   ) {
     return function (this: This, value: number) {
-      this[RECORDED_DATA].push(value);
+      this[RECORDED_DATA][index].push(value);
       return value;
     };
   }
   class Sut {
-    [RECORDED_DATA]: number[] = [];
+    [RECORDED_DATA]: number[][] = [[], []];
 
-    @parameters<Sut>(undefined, [record, defaultValue(0), record])
-    fn(a: string, b: number = 42) {
-      this[RECORDED_DATA].push(b);
+    @parameters<Sut>([record, defaultValue(0)], [defaultValue(0), record])
+    fn(a: number = 1337, b: number = 42) {
+      this[RECORDED_DATA][0].push(a);
+      this[RECORDED_DATA][1].push(b);
     }
   }
 
   const sut = new Sut();
-  sut.fn("ignored");
+  sut.fn();
 
-  assert.deepEqual(sut[RECORDED_DATA], [undefined, 0, 0]);
+  assert.deepEqual(sut[RECORDED_DATA], [
+    [undefined, 0],
+    [0, 0],
+  ]);
 });

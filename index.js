@@ -277,8 +277,8 @@ function prepareDecoratorsForParam(decorators, ctxTmpl) {
     return init[0];
   }
   return function (value) {
-    for (const f of init) {
-      value = f.call(this, value);
+    for (let i = init.length - 1; i >= 0; i--) {
+      value = init[i].call(this, value);
     }
     return value;
   };

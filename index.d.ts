@@ -200,10 +200,10 @@ export declare function parameter<This = unknown, Value = unknown>(decorators: {
 /**
  * Returns a parameter decorator that replaces any `undefined` value received by the parameter with the given value.
  *
- * This mimics the native _default parameter value syntax_ in function declarations, but applies that default value before the following parameter decorators.
- * Because parameter decorators are applied from last to first, the `defaultValue` decorator should likely come last.
+ * This mimics the native _default parameter value syntax_ in function declarations, but applies that default value before the following parameter decorators (and class/method/setter decorators).
+ * Because parameter decorators are applied first-to-last, the `defaultValue` decorator should likely come first.
  *
- * If other decorators don't need to see that default value, then you should prefer the native _default parameter value_ syntax in the function declaration.
+ * If other decorators (parameter or class/method/setter) don't need to see that default value, then you should prefer the native _default parameter value_ syntax in the function declaration.
  * In TypeScript, you'll want to use both to get the appropriate typing for the method (but note that the value declared in the function signature will actually be ignored).
  *
  * @template This The type on which the class element will be defined. For a static class element, this will be
