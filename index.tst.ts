@@ -7,7 +7,7 @@ import {
   type ClassMethodParameterDecoratorContext,
 } from "parameters-decorator";
 
-/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-unused-vars, no-unused-private-class-members */
 
 declare function boolean<This>(
   target: undefined,
@@ -242,4 +242,189 @@ test("defaultValue", () => {
     @(expect(parameter(defaultValue(-1))).type.toBeApplicable)
     set prop(a: number) {}
   }
+});
+
+// First, some constrained parameter decorators
+declare function onlyNonRest(
+  target: undefined,
+  context: ClassMethodParameterDecoratorContext & { rest: false },
+): void;
+declare function onlyRest(
+  target: undefined,
+  context: ClassMethodParameterDecoratorContext & { rest: true },
+): void;
+// TODO ?
+// declare function named(
+//   target: undefined,
+//   context: ClassMethodParameterDecoratorContext & { name: string },
+// ): void;
+// declare function memberPrefixed(
+//   target: undefined,
+//   context: ClassMethodParameterDecoratorContext & {
+//     function: { name: `p${string}` };
+//   },
+// ): void;
+// declare function memberSuffixed(
+//   target: undefined,
+//   context: ClassMethodParameterDecoratorContext & {
+//     function: { name: `${string}S` };
+//   },
+// ): void;
+declare function onlyClass(
+  target: undefined,
+  context: ClassMethodParameterDecoratorContext & {
+    function: { kind: "class" };
+  },
+): void;
+declare function onlyMethod(
+  target: undefined,
+  context: ClassMethodParameterDecoratorContext & {
+    function: { kind: "method" };
+  },
+): void;
+declare function onlySetter(
+  target: undefined,
+  context: ClassMethodParameterDecoratorContext & {
+    function: { kind: "setter" };
+  },
+): void;
+declare function onlyMember(
+  target: undefined,
+  context: ClassMethodParameterDecoratorContext & {
+    function: { kind: "method" | "setter" };
+  },
+): void;
+declare function memberNonStatic(
+  target: undefined,
+  context: ClassMethodParameterDecoratorContext & {
+    function: { static: false };
+  },
+): void;
+declare function memberStatic(
+  target: undefined,
+  context: ClassMethodParameterDecoratorContext & {
+    function: { static: true };
+  },
+): void;
+declare function memberPublic(
+  target: undefined,
+  context: ClassMethodParameterDecoratorContext & {
+    function: { private: false };
+  },
+): void;
+declare function memberPrivate(
+  target: undefined,
+  context: ClassMethodParameterDecoratorContext & {
+    function: { private: true };
+  },
+): void;
+
+describe("constrained applicability", () => {
+  test("rest", () => {
+    expect(parameters).type.toBeCallableWith(onlyNonRest);
+    expect(parameters).type.toBeCallableWith(["name", onlyNonRest]);
+    expect(parameters).type.toBeCallableWith([false, onlyNonRest]);
+    expect(parameters).type.toBeCallableWith(["name", false, onlyNonRest]);
+    expect(parameters).type.toBeCallableWith({ decorators: [onlyNonRest] });
+    expect(parameters).type.toBeCallableWith({
+      rest: false,
+      decorators: [onlyNonRest],
+    });
+    expect(parameters).type.not.toBeCallableWith([true, onlyNonRest]);
+    expect(parameters).type.not.toBeCallableWith(["name", true, onlyNonRest]);
+    expect(parameters).type.not.toBeCallableWith({
+      rest: true,
+      decorators: [onlyNonRest],
+    });
+
+    expect(parameters).type.toBeCallableWith([true, onlyRest]);
+    expect(parameters).type.toBeCallableWith(["name", true, onlyRest]);
+    expect(parameters).type.toBeCallableWith({
+      rest: true,
+      decorators: [onlyRest],
+    });
+    expect(parameters).type.not.toBeCallableWith(onlyRest);
+    expect(parameters).type.not.toBeCallableWith(["name", onlyRest]);
+    expect(parameters).type.not.toBeCallableWith([false, onlyRest]);
+    expect(parameters).type.not.toBeCallableWith(["name", false, onlyRest]);
+    expect(parameters).type.not.toBeCallableWith({ decorators: [onlyRest] });
+    expect(parameters).type.not.toBeCallableWith({
+      rest: false,
+      decorators: [onlyRest],
+    });
+  });
+
+  test("function.kind", () => {
+    @(expect(parameters(onlyClass)).type.toBeApplicable)
+    @(expect(parameters(onlyMethod)).type.not.toBeApplicable)
+    @(expect(parameters(onlySetter)).type.not.toBeApplicable)
+    @(expect(parameters(onlyMember)).type.not.toBeApplicable)
+    class C {
+      constructor(a: string) {}
+
+      @(expect(parameters(onlyClass)).type.not.toBeApplicable)
+      @(expect(parameters(onlyMethod)).type.toBeApplicable)
+      @(expect(parameters(onlySetter)).type.not.toBeApplicable)
+      @(expect(parameters(onlyMember)).type.toBeApplicable)
+      fn(a: string) {}
+
+      @(expect(parameter(onlyClass)).type.not.toBeApplicable)
+      @(expect(parameter(onlyMethod)).type.not.toBeApplicable)
+      @(expect(parameter(onlySetter)).type.toBeApplicable)
+      @(expect(parameter(onlyMember)).type.toBeApplicable)
+      set prop(value: string) {}
+    }
+  });
+
+  test("function.static", () => {
+    @(expect(parameters(memberNonStatic)).type.toBeApplicable)
+    @(expect(parameters(memberStatic)).type.toBeApplicable)
+    @(expect(parameters([onlyMember, memberNonStatic])).type.not.toBeApplicable)
+    @(expect(parameters([onlyMember, memberStatic])).type.not.toBeApplicable)
+    class C {
+      constructor(a: string) {}
+
+      @(expect(parameters(memberNonStatic)).type.toBeApplicable)
+      @(expect(parameters(memberStatic)).type.not.toBeApplicable)
+      fn(a: string) {}
+
+      @(expect(parameter(memberNonStatic)).type.toBeApplicable)
+      @(expect(parameter(memberStatic)).type.not.toBeApplicable)
+      set prop(value: string) {}
+
+      @(expect(parameters(memberNonStatic)).type.not.toBeApplicable)
+      @(expect(parameters(memberStatic)).type.toBeApplicable)
+      static fn(a: string) {}
+
+      @(expect(parameter(memberNonStatic)).type.not.toBeApplicable)
+      @(expect(parameter(memberStatic)).type.toBeApplicable)
+      static set prop(value: string) {}
+    }
+  });
+
+  test("function.private", () => {
+    @(expect(parameters(memberPublic)).type.toBeApplicable)
+    @(expect(parameters(memberPrivate)).type.toBeApplicable)
+    @(expect(parameters([onlyMember, memberPublic])).type.not.toBeApplicable)
+    @(expect(parameters([onlyMember, memberPrivate])).type.not.toBeApplicable)
+    class C {
+      constructor(a: string) {}
+
+      @(expect(parameters(memberPublic)).type.toBeApplicable)
+      @(expect(parameters(memberPrivate)).type.not.toBeApplicable)
+      fn(a: string) {}
+
+      @(expect(parameter(memberPublic)).type.toBeApplicable)
+      @(expect(parameter(memberPrivate)).type.not.toBeApplicable)
+      set prop(value: string) {}
+
+      @(expect(parameters(memberPublic)).type.not.toBeApplicable)
+      @(expect(parameters(memberPrivate)).type.toBeApplicable)
+      #fn(a: string) {}
+
+      @(expect(parameter(memberPublic)).type.not.toBeApplicable)
+      @(expect(parameter(memberPrivate)).type.toBeApplicable)
+      set #prop(value: string) {}
+    }
+  });
 });

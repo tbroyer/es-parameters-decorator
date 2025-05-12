@@ -68,13 +68,15 @@ export declare function parameters<
   This extends _ExtractThis<Decorators> = _ExtractThis<Decorators>,
   Parameters extends
     _ExtractParameters<Decorators> = _ExtractParameters<Decorators>,
+  ContextConstraints extends
+    _ExtractContextConstraints<Decorators> = _ExtractContextConstraints<Decorators>,
 >(
   ...decorators: Decorators
 ): {
   // Method decorator
   (
     target: (...args: [...Parameters, ...any]) => any,
-    context: ClassMethodDecoratorContext<This>,
+    context: ClassMethodDecoratorContext<This> & ContextConstraints,
   ): (...args: Parameters) => any;
   // Class decorator
   <
@@ -82,7 +84,7 @@ export declare function parameters<
       (abstract new (...args: [...Parameters, ...any]) => any),
   >(
     target: Class,
-    context: ClassDecoratorContext<Class>,
+    context: ClassDecoratorContext<Class> & ContextConstraints,
   ): Class;
 };
 export declare function parameters<
@@ -98,13 +100,16 @@ export declare function parameters<
     ..._ExtractParameters<NonFinalParams>,
     ..._ExtractParameter<_ExtractDecorators<FinalParam>>,
   ],
+  ContextConstraints extends _ExtractContextConstraints<
+    [...NonFinalParams, FinalParam]
+  > = _ExtractContextConstraints<[...NonFinalParams, FinalParam]>,
 >(
   ...decorators: [...NonFinalParams, FinalParam]
 ): {
   // Method decorator
   (
     target: (...args: Parameters) => any,
-    context: ClassMethodDecoratorContext<This>,
+    context: ClassMethodDecoratorContext<This> & ContextConstraints,
   ): (...args: Parameters) => any;
   // Class decorator
   <Class extends This & (abstract new (...args: Parameters) => any)>(
@@ -158,8 +163,9 @@ type _ClassMethodParameterDecorators<This = unknown, Value = any> =
 
 type _ClassMethodParameterDecorator<This, Value, Rest extends boolean> = (
   target: undefined,
-  context: ClassMethodParameterDecoratorContext<This> & {
+  context: Omit<ClassMethodParameterDecoratorContext<This>, "function"> & {
     rest: Rest;
+    function: { kind: never; name: never; static: never; private: never };
   },
 ) => void | ((value: Value) => Value);
 
@@ -293,6 +299,47 @@ type _ExtractThisFromContext<
   Context extends ClassMethodParameterDecoratorContext,
 > = ThisParameterType<Parameters<Context["addInitializer"]>[0]>;
 
+type _ExtractContextConstraints<
+  Decorators extends _ClassMethodParameterDecorators[],
+> = _UnionToIntersection<
+  {
+    [K in keyof Decorators]: _ExtractContextConstraints_<
+      _ExtractDecorators<Decorators[K]>
+    >;
+  }[number]
+>;
+
+type _ExtractContextConstraints_<
+  Decorators extends
+    | undefined
+    | _ClassMethodParameterDecorator<unknown, any, never>[],
+> = Decorators extends undefined
+  ? any
+  : _ExtractContextConstraintsFromDecorators<Exclude<Decorators, undefined>>;
+
+type _ExtractContextConstraintsFromDecorators<
+  Decorators extends _ClassMethodParameterDecorator<unknown, any, never>[],
+> = _UnionToIntersection<
+  {
+    [K in keyof Decorators]: _Function<
+      Parameters<Decorators[K]>[1]["function"]
+    >;
+  }[number]
+>;
+
+type _Function<
+  Function extends ClassMethodParameterDecoratorContext["function"],
+> = {
+  kind: Function["kind"];
+  name: Function["name"];
+  static?: Function extends { static: unknown }
+    ? Function["static"]
+    : undefined;
+  private?: Function extends { private: unknown }
+    ? Function["private"]
+    : undefined;
+};
+
 /**
  * Returns a setter decorator to apply parameter decorators to its parameter.
  *
@@ -300,6 +347,8 @@ type _ExtractThisFromContext<
  */
 export declare function parameter<
   Decorators extends _ClassMethodParameterDecorator<unknown, any, false>[],
+  ContextConstraints extends
+    _ExtractContextConstraintsFromDecorators<Decorators> = _ExtractContextConstraintsFromDecorators<Decorators>,
 >(
   ...decorators: Decorators
 ): <Value extends _ExtractParameter<Decorators>>(
@@ -307,7 +356,8 @@ export declare function parameter<
   context: ClassSetterDecoratorContext<
     _ExtractThisFromDecorators<Decorators>,
     Value
-  >,
+  > &
+    ContextConstraints,
 ) => void | ((value: Value) => void);
 /**
  * Returns a setter decorator to apply parameter decorators to its parameter.
@@ -317,6 +367,8 @@ export declare function parameter<
  */
 export declare function parameter<
   Decorators extends _ClassMethodParameterDecorator<unknown, any, false>[],
+  ContextConstraints extends
+    _ExtractContextConstraintsFromDecorators<Decorators> = _ExtractContextConstraintsFromDecorators<Decorators>,
 >(
   name: string,
   ...decorators: Decorators
@@ -325,7 +377,8 @@ export declare function parameter<
   context: ClassSetterDecoratorContext<
     _ExtractThisFromDecorators<Decorators>,
     Value
-  >,
+  > &
+    ContextConstraints,
 ) => void | ((value: Value) => void);
 /**
  * Returns a setter decorator to apply parameter decorators to its parameter.
@@ -336,6 +389,8 @@ export declare function parameter<
  */
 export declare function parameter<
   Decorators extends _ClassMethodParameterDecorator<unknown, any, false>[],
+  ContextConstraints extends
+    _ExtractContextConstraintsFromDecorators<Decorators> = _ExtractContextConstraintsFromDecorators<Decorators>,
 >(decorators: {
   name?: string | undefined;
   decorators: Decorators;
@@ -344,7 +399,8 @@ export declare function parameter<
   context: ClassSetterDecoratorContext<
     _ExtractThisFromDecorators<Decorators>,
     Value
-  >,
+  > &
+    ContextConstraints,
 ) => void | ((value: Value) => void);
 
 /**
@@ -385,8 +441,17 @@ export declare function optional<
   target: undefined,
   context: ClassMethodParameterDecoratorContext<
     _ExtractThisFromDecorators<Decorators>
-  >,
+  > &
+    _ExtractContext<Decorators>,
 ) => void | ((value: unknown) => undefined | _ExtractParameter<Decorators>);
+
+type _ExtractContext<
+  Decorators extends _ClassMethodParameterDecorator<unknown, any, never>[],
+> = _UnionToIntersection<
+  {
+    [K in keyof Decorators]: Parameters<Decorators[K]>[1];
+  }[number]
+>;
 
 /**
  * Returns a parameter decorator that applies a set of decorators to each value of a `...` rest parameter, rather than those values as an array.
@@ -401,7 +466,8 @@ export declare function rest<
   target: undefined,
   context: ClassMethodParameterDecoratorContext<
     _ExtractThisFromDecorators<Decorators>
-  > & {
-    rest: true;
-  },
+  > &
+    Omit<_ExtractContext<Decorators>, "rest"> & {
+      rest: true;
+    },
 ) => void | ((value: unknown) => _ExtractParameter<Decorators>[]);
