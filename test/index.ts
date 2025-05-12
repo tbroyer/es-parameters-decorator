@@ -227,8 +227,7 @@ void suite("parameter", () => {
     class Sut {
       [RECORDED_DATA]: any[] = [];
 
-      // FIXME: property type should (ideally) be inferred
-      @parameter<Sut, number>("b", record, record)
+      @parameter("b", record, record)
       set prop(b: number) {
         this[RECORDED_DATA].push(b);
       }
@@ -275,8 +274,7 @@ void suite("parameter", () => {
     class Sut {
       [RECORDED_DATA]: any[] = [];
 
-      // FIXME: property type should (ideally) be inferred
-      @parameter<Sut, number>("b", record, record)
+      @parameter("b", record, record)
       set #prop(b: number) {
         this[RECORDED_DATA].push(b);
       }
@@ -327,8 +325,7 @@ void suite("parameter", () => {
     class Sut {
       static [RECORDED_DATA]: any[] = [];
 
-      // FIXME: property type should (ideally) be inferred
-      @parameter<typeof Sut, number>("b", record, record)
+      @parameter("b", record, record)
       static set prop(b: number) {
         Sut[RECORDED_DATA].push(b);
       }
@@ -374,8 +371,7 @@ void suite("parameter", () => {
     class Sut {
       static [RECORDED_DATA]: any[] = [];
 
-      // FIXME: property type should (ideally) be inferred
-      @parameter<typeof Sut, number>("b", record, record)
+      @parameter("b", record, record)
       static set #prop(b: number) {
         Sut[RECORDED_DATA].push(b);
       }
@@ -416,11 +412,7 @@ void test("optional", () => {
   class Sut {
     [RECORDED_DATA]: string[] = [];
 
-    @parameters<Sut>([
-      record("first"),
-      optional(record("second")),
-      record("third"),
-    ])
+    @parameters([record("first"), optional(record("second")), record("third")])
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     fn(opt?: number) {}
   }
@@ -455,7 +447,7 @@ void test("rest", () => {
   class Sut {
     [RECORDED_DATA]: any[][] = [];
 
-    @parameters<Sut>(record, record, record, [true, rest(record), record])
+    @parameters(record, record, record, [true, rest(record), record])
     fn(a: string, b: number, c: boolean, ...d: string[]) {
       this[RECORDED_DATA][0].push(a);
       this[RECORDED_DATA][1].push(b);
@@ -492,7 +484,7 @@ void test("defaultValue", () => {
     // Parameters come in pairs: one which is only recorded, the other with defaultValue.
     // That way we can compare the decorator with the native behavior.
     // In other words, we also test that our assumptions are correct.
-    @parameters<Sut>(record, [record, defaultValue(0)], record, [
+    @parameters(record, [record, defaultValue(0)], record, [
       defaultValue(0),
       record,
     ])

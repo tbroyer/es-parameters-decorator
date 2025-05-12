@@ -51,151 +51,301 @@ export interface ClassMethodParameterDecoratorContext<This = unknown> {
   readonly metadata: DecoratorMetadata;
 }
 
-type ClassMethodParameterDecorator<This = unknown, Value = unknown> = (
-  value: undefined,
-  context: ClassMethodParameterDecoratorContext<This>,
-) => ((this: This, value: Value) => Value) | void;
+/**
+ * Returns a method or class decorator to apply parameter decorators to its (constructor's) parameters.
+ *
+ * The function takes as many arguments as there are parameters on the annotated method or class constructor.
+ * Each argument can be either:
+ * - `undefined` to skip the parameter and not apply any parameter decorator to it
+ * - a single parameter decorator
+ * - an array of parameter decorators, optionally _prefixed_ with the parameter name and/or whether it is a `...` rest parameter
+ * - an object with a `decorators` property as an array of parameter decorators, and optional properties `name` and `rest`
+ *
+ * @param decorators Sets of parameter decorators, one set per parameter of the annotated method or class constructor.
+ */
+export declare function parameters<
+  Decorators extends _NonRestClassMethodParameterDecorators[],
+  This extends _ExtractThis<Decorators> = _ExtractThis<Decorators>,
+  Parameters extends
+    _ExtractParameters<Decorators> = _ExtractParameters<Decorators>,
+>(
+  ...decorators: Decorators
+): {
+  // Method decorator
+  (
+    target: (...args: [...Parameters, ...any]) => any,
+    context: ClassMethodDecoratorContext<This>,
+  ): (...args: Parameters) => any;
+  // Class decorator
+  <
+    Class extends This &
+      (abstract new (...args: [...Parameters, ...any]) => any),
+  >(
+    target: Class,
+    context: ClassDecoratorContext<Class>,
+  ): Class;
+};
+export declare function parameters<
+  NonFinalParams extends _NonRestClassMethodParameterDecorators[],
+  FinalParam extends _RestClassMethodParameterDecorators,
+  This extends _ExtractThis<[...NonFinalParams, FinalParam]> = _ExtractThis<
+    [...NonFinalParams, FinalParam]
+  >,
+  Parameters extends [
+    ..._ExtractParameters<NonFinalParams>,
+    ..._ExtractParameter<_ExtractDecorators<FinalParam>>,
+  ] = [
+    ..._ExtractParameters<NonFinalParams>,
+    ..._ExtractParameter<_ExtractDecorators<FinalParam>>,
+  ],
+>(
+  ...decorators: [...NonFinalParams, FinalParam]
+): {
+  // Method decorator
+  (
+    target: (...args: Parameters) => any,
+    context: ClassMethodDecoratorContext<This>,
+  ): (...args: Parameters) => any;
+  // Class decorator
+  <Class extends This & (abstract new (...args: Parameters) => any)>(
+    target: Class,
+    context: ClassDecoratorContext<Class>,
+  ): Class;
+};
 
-type ClassMethodParameterDecorators<This = unknown, Value = unknown> =
-  | ClassMethodParameterDecorator<This, Value>
-  | ClassMethodParameterDecorator<This, Value>[]
-  | [name: string, ...decorators: ClassMethodParameterDecorator<This, Value>[]]
+type _NonRestClassMethodParameterDecorators<This = unknown, Value = any> =
+  | undefined
+  | _ClassMethodParameterDecorator<This, Value, false>
+  | [...decorators: _ClassMethodParameterDecorator<This, Value, false>[]]
+  | [
+      name: string,
+      ...decorators: _ClassMethodParameterDecorator<This, Value, false>[],
+    ]
+  | [
+      rest: false,
+      ...decorators: _ClassMethodParameterDecorator<This, Value, false>[],
+    ]
   | [
       name: string,
       rest: false,
-      ...decorators: ClassMethodParameterDecorator<This, Value>[],
+      ...decorators: _ClassMethodParameterDecorator<This, Value, false>[],
+    ]
+  | {
+      name?: string | undefined;
+      rest?: false | undefined;
+      decorators: _ClassMethodParameterDecorator<This, Value, false>[];
+    };
+
+type _RestClassMethodParameterDecorators<This = unknown, Value = any> =
+  | [
+      rest: true,
+      ...decorators: _ClassMethodParameterDecorator<This, Value[], true>[],
     ]
   | [
       name: string,
       rest: true,
-      ...decorators: ClassMethodParameterDecorator<This, Value[]>[],
+      ...decorators: _ClassMethodParameterDecorator<This, Value[], true>[],
     ]
-  | [rest: false, ...decorators: ClassMethodParameterDecorator<This, Value>[]]
-  | [rest: true, ...decorators: ClassMethodParameterDecorator<This, Value[]>[]]
-  | {
-      name?: string | undefined;
-      rest?: false | undefined;
-      decorators: ClassMethodParameterDecorator<This, Value>[];
-    }
   | {
       name?: string | undefined;
       rest: true;
-      decorators: ClassMethodParameterDecorator<This, Value[]>[];
+      decorators: _ClassMethodParameterDecorator<This, Value[], true>[];
     };
 
-type RemapMethodParametersToDecorators<This, Params extends unknown[]> = {
-  [K in keyof Params]?:
-    | ClassMethodParameterDecorators<This, Params[K]>
-    | undefined;
-};
+type _ClassMethodParameterDecorators<This = unknown, Value = any> =
+  | _NonRestClassMethodParameterDecorators<This, Value>
+  | _RestClassMethodParameterDecorators<This, Value>;
 
-/**
- * Returns a class decorator to apply parameter decorators to its constructor's parameters.
- *
- * The function takes as many arguments as there are parameters on the annotated class's constructor.
- * Each argument can be either:
- * - `undefined` to skip the parameter and not apply any parameter decorator to it
- * - a single parameter decorator
- * - an array of parameter decorators, optionally _prefixed_ with the parameter name and/or whether it is a `...` rest parameter
- * - an object with a `decorators` property as an array of parameter decorators, and optional properties `name` and `rest`
- *
- * @template Class The type of the decorated class.
- * @param decorators Sets of parameter decorators, one set per constructor parameter.
- */
-export declare function parameters<
-  Class extends abstract new (...args: any) => any = abstract new (
-    ...args: any
-  ) => any,
->(
-  ...decorators: RemapMethodParametersToDecorators<
-    Class,
-    ConstructorParameters<Class>
+type _ClassMethodParameterDecorator<This, Value, Rest extends boolean> = (
+  target: undefined,
+  context: ClassMethodParameterDecoratorContext<This> & {
+    rest: Rest;
+  },
+) => void | ((value: Value) => Value);
+
+type _ExtractParameters<Decorators extends _ClassMethodParameterDecorators[]> =
+  {
+    [K in keyof Decorators]: _ExtractParameter<
+      _ExtractDecorators<Decorators[K]>
+    >;
+  };
+
+type _ExtractDecorators<Decorators extends _ClassMethodParameterDecorators> =
+  Decorators extends undefined
+    ? undefined
+    : Decorators extends _ClassMethodParameterDecorator<unknown, any, boolean>
+      ? [Decorators]
+      : Decorators extends _ClassMethodParameterDecorator<
+            unknown,
+            any,
+            boolean
+          >[]
+        ? Decorators
+        : Decorators extends [
+              name: string,
+              rest: boolean,
+              ...decorators: infer D extends _ClassMethodParameterDecorator<
+                unknown,
+                any,
+                boolean
+              >[],
+            ]
+          ? D
+          : Decorators extends [
+                name: string,
+                ...decorators: infer D extends _ClassMethodParameterDecorator<
+                  unknown,
+                  any,
+                  boolean
+                >[],
+              ]
+            ? D
+            : Decorators extends [
+                  rest: boolean,
+                  ...decorators: infer D extends _ClassMethodParameterDecorator<
+                    unknown,
+                    any,
+                    boolean
+                  >[],
+                ]
+              ? D
+              : Decorators extends {
+                    decorators: infer D extends _ClassMethodParameterDecorator<
+                      unknown,
+                      any,
+                      boolean
+                    >[];
+                  }
+                ? D
+                : never;
+
+type _ExtractParameter<
+  Decorators extends
+    | undefined
+    | _ClassMethodParameterDecorator<unknown, any, never>[],
+> = Decorators extends undefined
+  ? any
+  : _ExtractParameter_<Exclude<Decorators, undefined>>;
+
+type _ExtractParameter_<
+  Decorators extends _ClassMethodParameterDecorator<unknown, any, never>[],
+> = _UnknownToAny<
+  _UnionToIntersection<
+    {
+      [K in keyof Decorators]: _ExtractParameterFromResult<
+        ReturnType<Decorators[K]>
+      >;
+    }[number]
   >
-): (value: Class, context: ClassDecoratorContext<Class>) => Class | void;
-/**
- * Returns a method decorator to apply parameter decorators to its parameters.
- *
- * The function takes as many arguments as there are parameters on the annotated method.
- * Each argument can be either:
- * - `undefined` to skip the parameter and not apply any parameter decorator to it
- * - a single parameter decorator
- * - an array of parameter decorators, optionally _prefixed_ with the parameter name and/or whether it is a `...` rest parameter
- * - an object with a `decorators` property as an array of parameter decorators, and optional properties `name` and `rest`
- *
- * @template This The type on which the class element will be defined. For a static class element, this will be
- * the type of the constructor. For a non-static class element, this will be the type of the instance. For a class (constructor), this will be `undefined`.
- * @template Value The type of the decorated method.
- * @param decorators Sets of parameter decorators, one set per constructor parameter.
- */
-export declare function parameters<
-  This = unknown,
-  Value extends (this: This, ...args: any) => any = (
-    this: This,
-    ...args: any
-  ) => any,
->(
-  ...decorators: RemapMethodParametersToDecorators<This, Parameters<Value>>
-): (
-  value: Value,
-  context: ClassMethodDecoratorContext<This, Value>,
-) => Value | void;
+>;
 
-type ClassSetterParameterDecorators<This = unknown, Value = unknown> =
-  | ClassMethodParameterDecorator<This, Value>
-  | ClassMethodParameterDecorator<This, Value>[]
-  | [name: string, ...decorators: ClassMethodParameterDecorator<This, Value>[]]
-  | {
-      name?: string | undefined;
-      decorators: ClassMethodParameterDecorator<This, Value>[];
-    };
+type _UnknownToAny<T> = unknown extends T ? any : T;
+
+type _UnionToIntersection<T> =
+  boolean extends _UnknownToNever<T>
+    ? boolean & _UnionToIntersectionHelper<Exclude<T, boolean>>
+    : _UnionToIntersectionHelper<T>;
+
+type _UnionToIntersectionHelper<T> = (
+  T extends any ? (x: T) => any : never
+) extends (x: infer R) => any
+  ? R
+  : never;
+
+type _UnknownToNever<T> = unknown extends T ? never : T;
+
+type _ExtractParameterFromResult<
+  Result extends void | ((value: unknown) => any),
+> = ReturnType<Exclude<Result, void>>;
+
+type _ExtractThis<Decorators extends _ClassMethodParameterDecorators[]> =
+  _UnionToIntersection<
+    {
+      [K in keyof Decorators]: _UnknownToNever<
+        _ExtractThis_<_ExtractDecorators<Decorators[K]>>
+      >;
+    }[number]
+  >;
+
+type _ExtractThis_<
+  Decorators extends
+    | undefined
+    | _ClassMethodParameterDecorator<unknown, any, never>[],
+> = Decorators extends undefined
+  ? unknown
+  : _ExtractThisFromDecorators<Exclude<Decorators, undefined>>;
+
+type _ExtractThisFromDecorators<
+  Decorators extends _ClassMethodParameterDecorator<unknown, any, never>[],
+> = _UnionToIntersection<
+  {
+    [K in keyof Decorators]: _UnknownToNever<
+      _ExtractThisFromDecorator<Decorators[K]>
+    >;
+  }[number]
+>;
+
+type _ExtractThisFromDecorator<
+  Decorator extends _ClassMethodParameterDecorator<unknown, any, never>,
+> = _ExtractThisFromContext<Parameters<Decorator>[1]>;
+
+type _ExtractThisFromContext<
+  Context extends ClassMethodParameterDecoratorContext,
+> = ThisParameterType<Parameters<Context["addInitializer"]>[0]>;
 
 /**
  * Returns a setter decorator to apply parameter decorators to its parameter.
  *
- * @template This The type on which the class element will be defined. For a static class element, this will be
- * the type of the constructor. For a non-static class element, this will be the type of the instance. For a class (constructor), this will be `undefined`.
- * @template Value The type of the decorated setter.
  * @param decorators The parameter decorators to apply to the setter's parameter
  */
-export declare function parameter<This = unknown, Value = unknown>(
-  ...decorators: ClassMethodParameterDecorator<This, Value>[]
-): (
-  value: (this: This, value: Value) => void,
-  context: ClassSetterDecoratorContext<This, Value>,
-) => ((this: This, value: Value) => void) | void;
+export declare function parameter<
+  Decorators extends _ClassMethodParameterDecorator<unknown, any, false>[],
+>(
+  ...decorators: Decorators
+): <Value extends _ExtractParameter<Decorators>>(
+  value: (value: Value) => void,
+  context: ClassSetterDecoratorContext<
+    _ExtractThisFromDecorators<Decorators>,
+    Value
+  >,
+) => void | ((value: Value) => void);
 /**
  * Returns a setter decorator to apply parameter decorators to its parameter.
  *
- * @template This The type on which the class element will be defined. For a static class element, this will be
- * the type of the constructor. For a non-static class element, this will be the type of the instance. For a class (constructor), this will be `undefined`.
- * @template Value The type of the decorated setter.
  * @param name The name of the parameter, to make it available to parameter decorators in their {@linkplain ClassMethodParameterDecoratorContext.name context}
  * @param decorators The parameter decorators to apply to the setter's parameter
  */
-export declare function parameter<This = unknown, Value = unknown>(
+export declare function parameter<
+  Decorators extends _ClassMethodParameterDecorator<unknown, any, false>[],
+>(
   name: string,
-  ...decorators: ClassMethodParameterDecorator<This, Value>[]
-): (
-  value: (this: This, value: Value) => void,
-  context: ClassSetterDecoratorContext<This, Value>,
-) => ((this: This, value: Value) => void) | void;
+  ...decorators: Decorators
+): <Value extends _ExtractParameter<Decorators>>(
+  value: (value: Value) => void,
+  context: ClassSetterDecoratorContext<
+    _ExtractThisFromDecorators<Decorators>,
+    Value
+  >,
+) => void | ((value: Value) => void);
 /**
  * Returns a setter decorator to apply parameter decorators to its parameter.
  *
- * @template This The type on which the class element will be defined. For a static class element, this will be
- * the type of the constructor. For a non-static class element, this will be the type of the instance. For a class (constructor), this will be `undefined`.
- * @template Value The type of the decorated setter.
  * @param decorators The parameter decorators to apply to the setter's parameter
  * @param decorators.name The name of the parameter, to make it available to parameter decorators in their {@linkplain ClassMethodParameterDecoratorContext.name context}
  * @param decorators.decorators The parameter decorators to apply to the setter's parameter
  */
-export declare function parameter<This = unknown, Value = unknown>(decorators: {
+export declare function parameter<
+  Decorators extends _ClassMethodParameterDecorator<unknown, any, false>[],
+>(decorators: {
   name?: string | undefined;
-  decorators: ClassMethodParameterDecorator<This, Value>[];
-}): (
-  value: (this: This, value: Value) => void,
-  context: ClassSetterDecoratorContext<This, Value>,
-) => ((this: This, value: Value) => void) | void;
+  decorators: Decorators;
+}): <Value extends _ExtractParameter<Decorators>>(
+  value: (value: Value) => void,
+  context: ClassSetterDecoratorContext<
+    _ExtractThisFromDecorators<Decorators>,
+    Value
+  >,
+) => void | ((value: Value) => void);
 
 /**
  * Returns a parameter decorator that replaces any `undefined` value received by the parameter with the given value.
@@ -213,7 +363,10 @@ export declare function parameter<This = unknown, Value = unknown>(decorators: {
  */
 export declare function defaultValue<This, Value>(
   value: Value,
-): ClassMethodParameterDecorator<This, Value>;
+): (
+  target: undefined,
+  context: ClassMethodParameterDecoratorContext<This>,
+) => (value: Value) => Value;
 
 /**
  * Returns a parameter decorator that conditionally _applies_ a set of parameter decorators only to non-`undefined` parameter values.
@@ -222,23 +375,33 @@ export declare function defaultValue<This, Value>(
  *
  * To apply the decorators unconditionally, but never let them see an `undefined` value, use the {@link defaultValue} decorator instead.
  *
- * @template This The type on which the class element will be defined. For a static class element, this will be
- * the type of the constructor. For a non-static class element, this will be the type of the instance. For a class (constructor), this will be `undefined`.
- * @template Value The type of the decorated parameter.
  * @param decorators The parameter decorators to be optionally _applied_.
  */
-export declare function optional<This, Value>(
-  ...decorators: ClassMethodParameterDecorator<This, Value>[]
-): ClassMethodParameterDecorator<This, Value | undefined>;
+export declare function optional<
+  Decorators extends _ClassMethodParameterDecorator<unknown, any, false>[],
+>(
+  ...decorators: Decorators
+): (
+  target: undefined,
+  context: ClassMethodParameterDecoratorContext<
+    _ExtractThisFromDecorators<Decorators>
+  >,
+) => void | ((value: unknown) => undefined | _ExtractParameter<Decorators>);
 
 /**
  * Returns a parameter decorator that applies a set of decorators to each value of a `...` rest parameter, rather than those values as an array.
  *
- * @template This The type on which the class element will be defined. For a static class element, this will be
- * the type of the constructor. For a non-static class element, this will be the type of the instance. For a class (constructor), this will be `undefined`.
- * @template Value The type of the decorated parameter.
  * @param decorators The parameter decorators to apply to all the rest argument values.
  */
-export declare function rest<This, Value>(
-  ...decorators: ClassMethodParameterDecorator<This, Value>[]
-): ClassMethodParameterDecorator<This, Value[]>;
+export declare function rest<
+  Decorators extends _ClassMethodParameterDecorator<unknown, any, false>[],
+>(
+  ...decorators: Decorators
+): (
+  target: undefined,
+  context: ClassMethodParameterDecoratorContext<
+    _ExtractThisFromDecorators<Decorators>
+  > & {
+    rest: true;
+  },
+) => void | ((value: unknown) => _ExtractParameter<Decorators>[]);

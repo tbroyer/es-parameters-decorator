@@ -121,7 +121,7 @@ export function rest(...decorators) {
 }
 
 /**
- * @param {ClassDecoratorContext | import("./index.js").ClassMethodParameterDecoratorContext} context
+ * @param {{kind: string}} context
  * @returns {Error}
  */
 function unsupportedDecoratorLocation(context) {
@@ -130,7 +130,7 @@ function unsupportedDecoratorLocation(context) {
 
 /**
  * @param {ClassDecoratorContext | ClassMethodDecoratorContext | ClassSetterDecoratorContext} context
- * @returns {import("./index.js").ClassMethodParameterDecoratorContext}
+ * @returns {Omit<import("./index.js").ClassMethodParameterDecoratorContext, "name" | "index" | "rest">}
  */
 function prepareContext(context) {
   const { addInitializer, metadata } = context;
@@ -146,13 +146,12 @@ function prepareContext(context) {
 
 /**
  * @template This
- * @template Value
  * @this {This}
- * @param {ReadonlyArray<import("./index.js").ClassMethodParameterDecorators<This, Value>>} decorators
- * @param {Omit<import("./index.js").ClassMethodParameterDecoratorContext, "name" | "index" | "rest">} ctxTmpl
- * @returns {Array<ReturnType<import("./index.js").ClassMethodParameterDecorators<This, Value>>> | undefined}
+ * @param {ReadonlyArray<import("./index.js")._ClassMethodParameterDecorators<This>>} decorators
+ * @param {Omit<import("./index.js").ClassMethodParameterDecoratorContext<This>, "name" | "index" | "rest">} ctxTmpl
  */
 function prepareDecorators(decorators, ctxTmpl) {
+  /** @type {Array<((<Value>(value: Value) => Value) & { rest?: true }) | undefined>} */
   const params = Array(decorators.length);
   for (let index = 0; index < decorators.length; index++) {
     const {
@@ -186,8 +185,8 @@ function prepareDecorators(decorators, ctxTmpl) {
 /**
  * @template This
  * @template Value
- * @param {import("./index.js").ClassMethodParameterDecorators<This, Value>} decorators
- * @returns {{name?: string | undefined, rest: boolean, decorators?: Array<import("./index.js").ClassMethodParameterDecorator<This, Value>>}}
+ * @param {import("./index.js")._ClassMethodParameterDecorators<This, Value>} decorators
+ * @returns {{name?: string | undefined, rest: boolean, decorators?: Array<import("./index.js")._ClassMethodParameterDecorator<This, Value>>}}
  */
 function normalizeMethodDecorators(decorators) {
   if (decorators == null) {
@@ -223,7 +222,7 @@ function normalizeMethodDecorators(decorators) {
  * @template This
  * @template Value
  * @param {Parameters<import("./index.js").parameter<This, Value>>} decorators
- * @returns {{name?: string | undefined, decorators?: Array<import("./index.js").ClassMethodParameterDecorator<This, Value>>}}
+ * @returns {{name?: string | undefined, decorators?: Array<import("./index.js")._ClassMethodParameterDecorator<This, Value>>}}
  */
 function normalizeSetterDecorators(decorators) {
   if (decorators == null) {
@@ -255,12 +254,11 @@ function normalizeSetterDecorators(decorators) {
  * @template This
  * @template Value
  * @this {This}
- * @param {number} index
- * @param {ReadonlyArray<import("./index.js").ClassMethodParameterDecorator<This, Value>>} decorators
+ * @param {ReadonlyArray<import("./index.js")._ClassMethodParameterDecorator<This, Value>>} decorators
  * @param {import("./index.js").ClassMethodParameterDecoratorContext<This>} ctxTmpl
- * @returns {ReturnType<import("./index.js").ClassMethodParameterDecorators<This, Value>> | undefined}
  */
 function prepareDecoratorsForParam(decorators, ctxTmpl) {
+  /** @type {Array<(value: Value) => Value>} */
   const init = [];
   for (let i = decorators.length - 1; i >= 0; i--) {
     let result = decorators[i].call(this, undefined, {
@@ -305,7 +303,7 @@ function assertCallable(f, msg) {
 
 /**
  * @param {unknown[]} args
- * @param {ReturnType<import("./index.js").ClassMethodParameterDecorator>[]} params
+ * @param {ReadonlyArray<((<Value>(value: Value) => Value) & { rest?: true }) | undefined>} params
  */
 function applyDecorators(args, params) {
   for (let i = 0; i < params.length; i++) {
