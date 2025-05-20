@@ -99,8 +99,15 @@ export function rest(...decorators) {
     if (context.kind !== "parameter") {
       throw unsupportedDecoratorLocation(context);
     }
-    // XXX: assert context.rest? force rest in context?
-    const param = prepareDecoratorsForParam.call(this, decorators, context);
+    if (context.rest !== true) {
+      throw new Error(
+        `rest() must be used on rest parameters (parameter ${context.index})`,
+      );
+    }
+    const param = prepareDecoratorsForParam.call(this, decorators, {
+      ...context,
+      rest: false,
+    });
     if (param === undefined) {
       return;
     }
