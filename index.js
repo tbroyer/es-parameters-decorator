@@ -69,7 +69,7 @@ export function defaultValue(def) {
       throw unsupportedDecoratorLocation(context);
     }
     return function (value) {
-      return value ?? def;
+      return value === undefined ? def : value;
     };
   };
 }

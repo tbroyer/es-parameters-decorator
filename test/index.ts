@@ -417,22 +417,35 @@ void test("rest", () => {
 
 void test("defaultValue", () => {
   const RECORDED_DATA = Symbol();
-  function record<This extends { [RECORDED_DATA]: number[][] }>(
+  function record<This extends { [RECORDED_DATA]: Array<number | null>[] }>(
     _: undefined,
     { index }: ClassMethodParameterDecoratorContext<This>,
   ) {
-    return function (this: This, value: number) {
+    return function (this: This, value: number | null) {
       this[RECORDED_DATA][index].push(value);
       return value;
     };
   }
   class Sut {
-    [RECORDED_DATA]: number[][] = [[], []];
+    [RECORDED_DATA]: Array<number | null>[] = [[], [], [], []];
 
-    @parameters<Sut>([record, defaultValue(0)], [defaultValue(0), record])
-    fn(a: number = 1337, b: number = 42) {
+    // Parameters come in pairs: one which is only recorded, the other with defaultValue.
+    // That way we can compare the decorator with the native behavior.
+    // In other words, we also test that our assumptions are correct.
+    @parameters<Sut>(record, [record, defaultValue(0)], record, [
+      defaultValue(0),
+      record,
+    ])
+    fn(
+      a: number | null = 1337,
+      a2: number | null = 1337,
+      b: number = 42,
+      b2: number = 42,
+    ) {
       this[RECORDED_DATA][0].push(a);
-      this[RECORDED_DATA][1].push(b);
+      this[RECORDED_DATA][1].push(a2);
+      this[RECORDED_DATA][2].push(b);
+      this[RECORDED_DATA][3].push(b2);
     }
   }
 
@@ -440,7 +453,29 @@ void test("defaultValue", () => {
   sut.fn();
 
   assert.deepEqual(sut[RECORDED_DATA], [
+    [undefined, 1337],
     [undefined, 0],
+    [undefined, 42],
     [0, 0],
+  ]);
+
+  const sut2 = new Sut();
+  sut2.fn(null, null);
+
+  assert.deepEqual(sut2[RECORDED_DATA], [
+    [null, null],
+    [null, null],
+    [undefined, 42],
+    [0, 0],
+  ]);
+
+  const sut3 = new Sut();
+  sut3.fn(1, 1, 2, 2);
+
+  assert.deepEqual(sut3[RECORDED_DATA], [
+    [1, 1],
+    [1, 1],
+    [2, 2],
+    [2, 2],
   ]);
 });
