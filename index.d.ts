@@ -120,50 +120,108 @@ export declare function parameters<
 
 type _NonRestClassMethodParameterDecorators<This = unknown, Value = any> =
   | undefined
-  | _ClassMethodParameterDecorator<This, Value, false>
-  | [...decorators: _ClassMethodParameterDecorator<This, Value, false>[]]
+  | _ClassMethodParameterDecorator<This, Value, undefined, false>
+  | [
+      ...decorators: _ClassMethodParameterDecorator<
+        This,
+        Value,
+        undefined,
+        false
+      >[],
+    ]
   | [
       name: string,
-      ...decorators: _ClassMethodParameterDecorator<This, Value, false>[],
+      ...decorators: _ClassMethodParameterDecorator<
+        This,
+        Value,
+        string,
+        false
+      >[],
     ]
   | [
       rest: false,
-      ...decorators: _ClassMethodParameterDecorator<This, Value, false>[],
+      ...decorators: _ClassMethodParameterDecorator<
+        This,
+        Value,
+        undefined,
+        false
+      >[],
     ]
   | [
       name: string,
       rest: false,
-      ...decorators: _ClassMethodParameterDecorator<This, Value, false>[],
+      ...decorators: _ClassMethodParameterDecorator<
+        This,
+        Value,
+        string,
+        false
+      >[],
     ]
   | {
-      name?: string | undefined;
+      name: string;
       rest?: false | undefined;
-      decorators: _ClassMethodParameterDecorator<This, Value, false>[];
+      decorators: _ClassMethodParameterDecorator<This, Value, string, false>[];
+    }
+  | {
+      name?: undefined;
+      rest?: false | undefined;
+      decorators: _ClassMethodParameterDecorator<
+        This,
+        Value,
+        undefined,
+        false
+      >[];
     };
 
 type _RestClassMethodParameterDecorators<This = unknown, Value = any> =
   | [
       rest: true,
-      ...decorators: _ClassMethodParameterDecorator<This, Value[], true>[],
+      ...decorators: _ClassMethodParameterDecorator<
+        This,
+        Value[],
+        undefined,
+        true
+      >[],
     ]
   | [
       name: string,
       rest: true,
-      ...decorators: _ClassMethodParameterDecorator<This, Value[], true>[],
+      ...decorators: _ClassMethodParameterDecorator<
+        This,
+        Value[],
+        string,
+        true
+      >[],
     ]
   | {
-      name?: string | undefined;
+      name: string;
       rest: true;
-      decorators: _ClassMethodParameterDecorator<This, Value[], true>[];
+      decorators: _ClassMethodParameterDecorator<This, Value[], string, true>[];
+    }
+  | {
+      name?: undefined;
+      rest: true;
+      decorators: _ClassMethodParameterDecorator<
+        This,
+        Value[],
+        undefined,
+        true
+      >[];
     };
 
 type _ClassMethodParameterDecorators<This = unknown, Value = any> =
   | _NonRestClassMethodParameterDecorators<This, Value>
   | _RestClassMethodParameterDecorators<This, Value>;
 
-type _ClassMethodParameterDecorator<This, Value, Rest extends boolean> = (
+type _ClassMethodParameterDecorator<
+  This,
+  Value,
+  Name extends string | undefined,
+  Rest extends boolean,
+> = (
   target: undefined,
   context: Omit<ClassMethodParameterDecoratorContext<This>, "function"> & {
+    name: Name;
     rest: Rest;
     function: { kind: never; name: never; static: never; private: never };
   },
@@ -179,11 +237,17 @@ type _ExtractParameters<Decorators extends _ClassMethodParameterDecorators[]> =
 type _ExtractDecorators<Decorators extends _ClassMethodParameterDecorators> =
   Decorators extends undefined
     ? undefined
-    : Decorators extends _ClassMethodParameterDecorator<unknown, any, boolean>
+    : Decorators extends _ClassMethodParameterDecorator<
+          unknown,
+          any,
+          string | undefined,
+          boolean
+        >
       ? [Decorators]
       : Decorators extends _ClassMethodParameterDecorator<
             unknown,
             any,
+            string | undefined,
             boolean
           >[]
         ? Decorators
@@ -193,6 +257,7 @@ type _ExtractDecorators<Decorators extends _ClassMethodParameterDecorators> =
               ...decorators: infer D extends _ClassMethodParameterDecorator<
                 unknown,
                 any,
+                string | undefined,
                 boolean
               >[],
             ]
@@ -202,6 +267,7 @@ type _ExtractDecorators<Decorators extends _ClassMethodParameterDecorators> =
                 ...decorators: infer D extends _ClassMethodParameterDecorator<
                   unknown,
                   any,
+                  string | undefined,
                   boolean
                 >[],
               ]
@@ -211,6 +277,7 @@ type _ExtractDecorators<Decorators extends _ClassMethodParameterDecorators> =
                   ...decorators: infer D extends _ClassMethodParameterDecorator<
                     unknown,
                     any,
+                    string | undefined,
                     boolean
                   >[],
                 ]
@@ -219,6 +286,7 @@ type _ExtractDecorators<Decorators extends _ClassMethodParameterDecorators> =
                     decorators: infer D extends _ClassMethodParameterDecorator<
                       unknown,
                       any,
+                      string | undefined,
                       boolean
                     >[];
                   }
@@ -228,13 +296,18 @@ type _ExtractDecorators<Decorators extends _ClassMethodParameterDecorators> =
 type _ExtractParameter<
   Decorators extends
     | undefined
-    | _ClassMethodParameterDecorator<unknown, any, never>[],
+    | _ClassMethodParameterDecorator<unknown, any, never, never>[],
 > = Decorators extends undefined
   ? any
   : _ExtractParameter_<Exclude<Decorators, undefined>>;
 
 type _ExtractParameter_<
-  Decorators extends _ClassMethodParameterDecorator<unknown, any, never>[],
+  Decorators extends _ClassMethodParameterDecorator<
+    unknown,
+    any,
+    never,
+    never
+  >[],
 > = _UnknownToAny<
   _UnionToIntersection<
     {
@@ -276,13 +349,18 @@ type _ExtractThis<Decorators extends _ClassMethodParameterDecorators[]> =
 type _ExtractThis_<
   Decorators extends
     | undefined
-    | _ClassMethodParameterDecorator<unknown, any, never>[],
+    | _ClassMethodParameterDecorator<unknown, any, never, never>[],
 > = Decorators extends undefined
   ? unknown
   : _ExtractThisFromDecorators<Exclude<Decorators, undefined>>;
 
 type _ExtractThisFromDecorators<
-  Decorators extends _ClassMethodParameterDecorator<unknown, any, never>[],
+  Decorators extends _ClassMethodParameterDecorator<
+    unknown,
+    any,
+    never,
+    never
+  >[],
 > = _UnionToIntersection<
   {
     [K in keyof Decorators]: _UnknownToNever<
@@ -292,7 +370,7 @@ type _ExtractThisFromDecorators<
 >;
 
 type _ExtractThisFromDecorator<
-  Decorator extends _ClassMethodParameterDecorator<unknown, any, never>,
+  Decorator extends _ClassMethodParameterDecorator<unknown, any, never, never>,
 > = _ExtractThisFromContext<Parameters<Decorator>[1]>;
 
 type _ExtractThisFromContext<
@@ -312,13 +390,18 @@ type _ExtractContextConstraints<
 type _ExtractContextConstraints_<
   Decorators extends
     | undefined
-    | _ClassMethodParameterDecorator<unknown, any, never>[],
+    | _ClassMethodParameterDecorator<unknown, any, never, never>[],
 > = Decorators extends undefined
   ? any
   : _ExtractContextConstraintsFromDecorators<Exclude<Decorators, undefined>>;
 
 type _ExtractContextConstraintsFromDecorators<
-  Decorators extends _ClassMethodParameterDecorator<unknown, any, never>[],
+  Decorators extends _ClassMethodParameterDecorator<
+    unknown,
+    any,
+    never,
+    never
+  >[],
 > = _UnionToIntersection<
   {
     [K in keyof Decorators]: _Function<
@@ -346,7 +429,12 @@ type _Function<
  * @param decorators The parameter decorators to apply to the setter's parameter
  */
 export declare function parameter<
-  Decorators extends _ClassMethodParameterDecorator<unknown, any, false>[],
+  Decorators extends _ClassMethodParameterDecorator<
+    unknown,
+    any,
+    undefined,
+    false
+  >[],
   ContextConstraints extends
     _ExtractContextConstraintsFromDecorators<Decorators> = _ExtractContextConstraintsFromDecorators<Decorators>,
 >(
@@ -366,7 +454,12 @@ export declare function parameter<
  * @param decorators The parameter decorators to apply to the setter's parameter
  */
 export declare function parameter<
-  Decorators extends _ClassMethodParameterDecorator<unknown, any, false>[],
+  Decorators extends _ClassMethodParameterDecorator<
+    unknown,
+    any,
+    string,
+    false
+  >[],
   ContextConstraints extends
     _ExtractContextConstraintsFromDecorators<Decorators> = _ExtractContextConstraintsFromDecorators<Decorators>,
 >(
@@ -388,11 +481,42 @@ export declare function parameter<
  * @param decorators.decorators The parameter decorators to apply to the setter's parameter
  */
 export declare function parameter<
-  Decorators extends _ClassMethodParameterDecorator<unknown, any, false>[],
+  Decorators extends _ClassMethodParameterDecorator<
+    unknown,
+    any,
+    string,
+    false
+  >[],
   ContextConstraints extends
     _ExtractContextConstraintsFromDecorators<Decorators> = _ExtractContextConstraintsFromDecorators<Decorators>,
 >(decorators: {
-  name?: string | undefined;
+  name: string;
+  decorators: Decorators;
+}): <Value extends _ExtractParameter<Decorators>>(
+  value: (value: Value) => void,
+  context: ClassSetterDecoratorContext<
+    _ExtractThisFromDecorators<Decorators>,
+    Value
+  > &
+    ContextConstraints,
+) => void | ((value: Value) => void);
+/**
+ * Returns a setter decorator to apply parameter decorators to its parameter.
+ *
+ * @param decorators The parameter decorators to apply to the setter's parameter
+ * @param decorators.decorators The parameter decorators to apply to the setter's parameter
+ */
+export declare function parameter<
+  Decorators extends _ClassMethodParameterDecorator<
+    unknown,
+    any,
+    undefined,
+    false
+  >[],
+  ContextConstraints extends
+    _ExtractContextConstraintsFromDecorators<Decorators> = _ExtractContextConstraintsFromDecorators<Decorators>,
+>(decorators: {
+  name?: undefined;
   decorators: Decorators;
 }): <Value extends _ExtractParameter<Decorators>>(
   value: (value: Value) => void,
@@ -434,7 +558,12 @@ export declare function defaultValue<This, Value>(
  * @param decorators The parameter decorators to be optionally _applied_.
  */
 export declare function optional<
-  Decorators extends _ClassMethodParameterDecorator<unknown, any, false>[],
+  Decorators extends _ClassMethodParameterDecorator<
+    unknown,
+    any,
+    string | undefined,
+    false
+  >[],
 >(
   ...decorators: Decorators
 ): (
@@ -446,7 +575,12 @@ export declare function optional<
 ) => void | ((value: unknown) => undefined | _ExtractParameter<Decorators>);
 
 type _ExtractContext<
-  Decorators extends _ClassMethodParameterDecorator<unknown, any, never>[],
+  Decorators extends _ClassMethodParameterDecorator<
+    unknown,
+    any,
+    never,
+    never
+  >[],
 > = _UnionToIntersection<
   {
     [K in keyof Decorators]: Parameters<Decorators[K]>[1];
@@ -459,7 +593,12 @@ type _ExtractContext<
  * @param decorators The parameter decorators to apply to all the rest argument values.
  */
 export declare function rest<
-  Decorators extends _ClassMethodParameterDecorator<unknown, any, false>[],
+  Decorators extends _ClassMethodParameterDecorator<
+    unknown,
+    any,
+    string | undefined,
+    false
+  >[],
 >(
   ...decorators: Decorators
 ): (

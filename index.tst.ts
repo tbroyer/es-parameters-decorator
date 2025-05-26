@@ -253,11 +253,11 @@ declare function onlyRest(
   target: undefined,
   context: ClassMethodParameterDecoratorContext & { rest: true },
 ): void;
+declare function named(
+  target: undefined,
+  context: ClassMethodParameterDecoratorContext & { name: string },
+): void;
 // TODO ?
-// declare function named(
-//   target: undefined,
-//   context: ClassMethodParameterDecoratorContext & { name: string },
-// ): void;
 // declare function memberPrefixed(
 //   target: undefined,
 //   context: ClassMethodParameterDecoratorContext & {
@@ -351,6 +351,27 @@ describe("constrained applicability", () => {
     expect(parameters).type.not.toBeCallableWith({
       rest: false,
       decorators: [onlyRest],
+    });
+  });
+
+  test("named", () => {
+    expect(parameters).type.toBeCallableWith(["name", named]);
+    expect(parameters).type.toBeCallableWith({
+      name: "name",
+      decorators: [named],
+    });
+    expect(parameters).type.toBeCallableWith(["name", true, named]);
+    expect(parameters).type.toBeCallableWith({
+      name: "name",
+      rest: true,
+      decorators: [named],
+    });
+    expect(parameters).type.not.toBeCallableWith(named);
+    expect(parameters).type.not.toBeCallableWith({ decorators: [named] });
+    expect(parameters).type.not.toBeCallableWith([true, named]);
+    expect(parameters).type.not.toBeCallableWith({
+      rest: true,
+      decorators: [named],
     });
   });
 
