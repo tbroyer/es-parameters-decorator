@@ -117,16 +117,144 @@ export declare function parameters<
     context: ClassDecoratorContext<Class>,
   ): Class;
 };
+/**
+ * Returns a method or class decorator to apply parameter decorators to its (constructor's) parameters.
+ *
+ * The function takes as many arguments as there are parameters on the annotated method or class constructor.
+ * Each argument can be either:
+ * - `undefined` to skip the parameter and not apply any parameter decorator to it
+ * - a single parameter decorator
+ * - an array of parameter decorators, optionally _prefixed_ with the parameter name and/or whether it is a `...` rest parameter
+ * - an object with a `decorators` property as an array of parameter decorators, and optional properties `name` and `rest`
+ *
+ * This overload is meant to be used with explicit type arguments, for when type inference fails to correctly infer the return type.
+ *
+ * @template Parameters The types of the parameters
+ * @template This The type on which the class element will be defined.
+ * @template ContextConstraints Constraints applied to the decorator context
+ * @param decorators Sets of parameter decorators, one set per parameter of the annotated method or class constructor.
+ */
+export declare function parameters<
+  Parameters extends unknown[],
+  This = unknown,
+  ContextConstraints extends {
+    kind?: "class" | "method" | undefined;
+    name?: string | symbol | undefined;
+    static?: boolean | undefined;
+    private?: boolean | undefined;
+  } = {
+    kind?: "class" | "method" | undefined;
+    name?: string | symbol | undefined;
+    static?: boolean | undefined;
+    private?: boolean | undefined;
+  },
+>(
+  ...decorators: {
+    [K in keyof Parameters]: _NonRestClassMethodParameterDecorators<
+      NoInfer<This>,
+      Parameters[K],
+      { kind: "class" | "method" } & NoInfer<ContextConstraints>
+    >;
+  }
+): {
+  // Method decorator
+  (
+    target: (...args: [...Parameters, ...any]) => any,
+    context: ClassMethodDecoratorContext<This> & ContextConstraints,
+  ): (...args: Parameters) => any;
+  // Class decorator
+  <
+    Class extends This &
+      (abstract new (...args: [...Parameters, ...any]) => any),
+  >(
+    target: Class,
+    context: ClassDecoratorContext<Class>,
+  ): Class;
+};
+/**
+ * Returns a method or class decorator to apply parameter decorators to its (constructor's) parameters.
+ *
+ * The function takes as many arguments as there are parameters on the annotated method or class constructor.
+ * Each argument can be either:
+ * - `undefined` to skip the parameter and not apply any parameter decorator to it
+ * - a single parameter decorator
+ * - an array of parameter decorators, optionally _prefixed_ with the parameter name and/or whether it is a `...` rest parameter
+ * - an object with a `decorators` property as an array of parameter decorators, and optional properties `name` and `rest`
+ *
+ * This overload is meant to be used with explicit type arguments, for when type inference fails to correctly infer the return type.
+ *
+ * @template NonFinalParams The types of the non-rest parameters
+ * @template RestParam The type of the rest parameter's elements
+ * @template This The type on which the class element will be defined.
+ * @template ContextConstraints Constraints applied to the decorator context
+ * @param decorators Sets of parameter decorators, one set per parameter of the annotated method or class constructor.
+ */
+export declare function parameters<
+  NonFinalParams extends unknown[],
+  RestParam,
+  This = unknown,
+  ContextConstraints extends {
+    kind?: "class" | "method" | undefined;
+    name?: string | symbol | undefined;
+    static?: boolean | undefined;
+    private?: boolean | undefined;
+  } = {
+    kind?: "class" | "method" | undefined;
+    name?: string | symbol | undefined;
+    static?: boolean | undefined;
+    private?: boolean | undefined;
+  },
+>(
+  ...decorators: [
+    ...{
+      [K in keyof NonFinalParams]: _NonRestClassMethodParameterDecorators<
+        NoInfer<This>,
+        NonFinalParams[K],
+        { kind: "class" | "method" } & NoInfer<ContextConstraints>
+      >;
+    },
+    _RestClassMethodParameterDecorators<
+      NoInfer<This>,
+      NoInfer<RestParam>,
+      { kind: "class" | "method" } & NoInfer<ContextConstraints>
+    >,
+  ]
+): {
+  // Method decorator
+  (
+    target: (...args: [...NonFinalParams, RestParam]) => any,
+    context: ClassMethodDecoratorContext<This> & ContextConstraints,
+  ): (...args: [...NonFinalParams, RestParam]) => any;
+  // Class decorator
+  <
+    Class extends This &
+      (abstract new (...args: [...NonFinalParams, RestParam]) => any),
+  >(
+    target: Class,
+    context: ClassDecoratorContext<Class>,
+  ): Class;
+};
 
-type _NonRestClassMethodParameterDecorators<This = unknown, Value = any> =
+type _NonRestClassMethodParameterDecorators<
+  This = unknown,
+  Value = any,
+  ContextConstraints = unknown,
+> =
   | undefined
-  | _ClassMethodParameterDecorator<This, Value, undefined, false>
+  | _ClassMethodParameterDecorator<
+      This,
+      Value,
+      undefined,
+      false,
+      ContextConstraints
+    >
   | [
       ...decorators: _ClassMethodParameterDecorator<
         This,
         Value,
         undefined,
-        false
+        false,
+        ContextConstraints
       >[],
     ]
   | [
@@ -135,7 +263,8 @@ type _NonRestClassMethodParameterDecorators<This = unknown, Value = any> =
         This,
         Value,
         string,
-        false
+        false,
+        ContextConstraints
       >[],
     ]
   | [
@@ -144,7 +273,8 @@ type _NonRestClassMethodParameterDecorators<This = unknown, Value = any> =
         This,
         Value,
         undefined,
-        false
+        false,
+        ContextConstraints
       >[],
     ]
   | [
@@ -154,13 +284,20 @@ type _NonRestClassMethodParameterDecorators<This = unknown, Value = any> =
         This,
         Value,
         string,
-        false
+        false,
+        ContextConstraints
       >[],
     ]
   | {
       name: string;
       rest?: false | undefined;
-      decorators: _ClassMethodParameterDecorator<This, Value, string, false>[];
+      decorators: _ClassMethodParameterDecorator<
+        This,
+        Value,
+        string,
+        false,
+        ContextConstraints
+      >[];
     }
   | {
       name?: undefined;
@@ -169,18 +306,24 @@ type _NonRestClassMethodParameterDecorators<This = unknown, Value = any> =
         This,
         Value,
         undefined,
-        false
+        false,
+        ContextConstraints
       >[];
     };
 
-type _RestClassMethodParameterDecorators<This = unknown, Value = any> =
+type _RestClassMethodParameterDecorators<
+  This = unknown,
+  Value = any,
+  ContextConstraints = unknown,
+> =
   | [
       rest: true,
       ...decorators: _ClassMethodParameterDecorator<
         This,
         Value[],
         undefined,
-        true
+        true,
+        ContextConstraints
       >[],
     ]
   | [
@@ -190,13 +333,20 @@ type _RestClassMethodParameterDecorators<This = unknown, Value = any> =
         This,
         Value[],
         string,
-        true
+        true,
+        ContextConstraints
       >[],
     ]
   | {
       name: string;
       rest: true;
-      decorators: _ClassMethodParameterDecorator<This, Value[], string, true>[];
+      decorators: _ClassMethodParameterDecorator<
+        This,
+        Value[],
+        string,
+        true,
+        ContextConstraints
+      >[];
     }
   | {
       name?: undefined;
@@ -205,7 +355,8 @@ type _RestClassMethodParameterDecorators<This = unknown, Value = any> =
         This,
         Value[],
         undefined,
-        true
+        true,
+        ContextConstraints
       >[];
     };
 
@@ -218,12 +369,26 @@ type _ClassMethodParameterDecorator<
   Value,
   Name extends string | undefined,
   Rest extends boolean,
+  ContextConstraints,
 > = (
   target: undefined,
   context: Omit<ClassMethodParameterDecoratorContext<This>, "function"> & {
     name: Name;
     rest: Rest;
-    function: { kind: never; name: never; static: never; private: never };
+    function: {
+      kind: ContextConstraints extends { kind: unknown }
+        ? ContextConstraints["kind"]
+        : never;
+      name: ContextConstraints extends { name: unknown }
+        ? ContextConstraints["name"]
+        : never;
+      static: ContextConstraints extends { static: unknown }
+        ? ContextConstraints["static"]
+        : never;
+      private: ContextConstraints extends { private: unknown }
+        ? ContextConstraints["private"]
+        : never;
+    };
   },
 ) => void | ((value: Value) => Value);
 
@@ -241,14 +406,16 @@ type _ExtractDecorators<Decorators extends _ClassMethodParameterDecorators> =
           unknown,
           any,
           string | undefined,
-          boolean
+          boolean,
+          unknown
         >
       ? [Decorators]
       : Decorators extends _ClassMethodParameterDecorator<
             unknown,
             any,
             string | undefined,
-            boolean
+            boolean,
+            unknown
           >[]
         ? Decorators
         : Decorators extends [
@@ -258,7 +425,8 @@ type _ExtractDecorators<Decorators extends _ClassMethodParameterDecorators> =
                 unknown,
                 any,
                 string | undefined,
-                boolean
+                boolean,
+                unknown
               >[],
             ]
           ? D
@@ -268,7 +436,8 @@ type _ExtractDecorators<Decorators extends _ClassMethodParameterDecorators> =
                   unknown,
                   any,
                   string | undefined,
-                  boolean
+                  boolean,
+                  unknown
                 >[],
               ]
             ? D
@@ -278,7 +447,8 @@ type _ExtractDecorators<Decorators extends _ClassMethodParameterDecorators> =
                     unknown,
                     any,
                     string | undefined,
-                    boolean
+                    boolean,
+                    unknown
                   >[],
                 ]
               ? D
@@ -287,7 +457,8 @@ type _ExtractDecorators<Decorators extends _ClassMethodParameterDecorators> =
                       unknown,
                       any,
                       string | undefined,
-                      boolean
+                      boolean,
+                      unknown
                     >[];
                   }
                 ? D
@@ -296,7 +467,7 @@ type _ExtractDecorators<Decorators extends _ClassMethodParameterDecorators> =
 type _ExtractParameter<
   Decorators extends
     | undefined
-    | _ClassMethodParameterDecorator<unknown, any, never, never>[],
+    | _ClassMethodParameterDecorator<unknown, any, never, never, unknown>[],
 > = Decorators extends undefined
   ? any
   : _ExtractParameter_<Exclude<Decorators, undefined>>;
@@ -306,7 +477,8 @@ type _ExtractParameter_<
     unknown,
     any,
     never,
-    never
+    never,
+    unknown
   >[],
 > = _UnknownToAny<
   _UnionToIntersection<
@@ -349,7 +521,7 @@ type _ExtractThis<Decorators extends _ClassMethodParameterDecorators[]> =
 type _ExtractThis_<
   Decorators extends
     | undefined
-    | _ClassMethodParameterDecorator<unknown, any, never, never>[],
+    | _ClassMethodParameterDecorator<unknown, any, never, never, unknown>[],
 > = Decorators extends undefined
   ? unknown
   : _ExtractThisFromDecorators<Exclude<Decorators, undefined>>;
@@ -359,7 +531,8 @@ type _ExtractThisFromDecorators<
     unknown,
     any,
     never,
-    never
+    never,
+    unknown
   >[],
 > = _UnionToIntersection<
   {
@@ -370,7 +543,13 @@ type _ExtractThisFromDecorators<
 >;
 
 type _ExtractThisFromDecorator<
-  Decorator extends _ClassMethodParameterDecorator<unknown, any, never, never>,
+  Decorator extends _ClassMethodParameterDecorator<
+    unknown,
+    any,
+    never,
+    never,
+    unknown
+  >,
 > = _ExtractThisFromContext<Parameters<Decorator>[1]>;
 
 type _ExtractThisFromContext<
@@ -390,7 +569,7 @@ type _ExtractContextConstraints<
 type _ExtractContextConstraints_<
   Decorators extends
     | undefined
-    | _ClassMethodParameterDecorator<unknown, any, never, never>[],
+    | _ClassMethodParameterDecorator<unknown, any, never, never, unknown>[],
 > = Decorators extends undefined
   ? any
   : _ExtractContextConstraintsFromDecorators<Exclude<Decorators, undefined>>;
@@ -400,7 +579,8 @@ type _ExtractContextConstraintsFromDecorators<
     unknown,
     any,
     never,
-    never
+    never,
+    unknown
   >[],
 > = _UnionToIntersection<
   {
@@ -433,7 +613,8 @@ export declare function parameter<
     unknown,
     any,
     undefined,
-    false
+    false,
+    { kind: "setter" }
   >[],
   ContextConstraints extends
     _ExtractContextConstraintsFromDecorators<Decorators> = _ExtractContextConstraintsFromDecorators<Decorators>,
@@ -458,7 +639,8 @@ export declare function parameter<
     unknown,
     any,
     string,
-    false
+    false,
+    { kind: "setter" }
   >[],
   ContextConstraints extends
     _ExtractContextConstraintsFromDecorators<Decorators> = _ExtractContextConstraintsFromDecorators<Decorators>,
@@ -485,7 +667,8 @@ export declare function parameter<
     unknown,
     any,
     string,
-    false
+    false,
+    { kind: "setter" }
   >[],
   ContextConstraints extends
     _ExtractContextConstraintsFromDecorators<Decorators> = _ExtractContextConstraintsFromDecorators<Decorators>,
@@ -511,7 +694,8 @@ export declare function parameter<
     unknown,
     any,
     undefined,
-    false
+    false,
+    { kind: "setter" }
   >[],
   ContextConstraints extends
     _ExtractContextConstraintsFromDecorators<Decorators> = _ExtractContextConstraintsFromDecorators<Decorators>,
@@ -525,6 +709,149 @@ export declare function parameter<
     Value
   > &
     ContextConstraints,
+) => void | ((value: Value) => void);
+/**
+ * Returns a setter decorator to apply parameter decorators to its parameter.
+ *
+ * This overload is meant to be used with explicit type arguments, for when type inference fails to correctly infer the return type.
+ *
+ * @template Value The type of the parameter
+ * @template This The type on which the setter will be defined.
+ * @template ContextConstraints Constraints applied to the decorator context
+ * @param decorators The parameter decorators to apply to the setter's parameter
+ */
+export declare function parameter<
+  Value,
+  This = unknown,
+  ContextConstraints extends {
+    name?: string | symbol | undefined;
+    static?: boolean | undefined;
+    private?: boolean | undefined;
+  } = {
+    name?: string | symbol | undefined;
+    static?: boolean | undefined;
+    private?: boolean | undefined;
+  },
+>(
+  ...decorators: _ClassMethodParameterDecorator<
+    NoInfer<This>,
+    NoInfer<Value>,
+    undefined,
+    false,
+    { kind: "setter" } & NoInfer<ContextConstraints>
+  >[]
+): (
+  value: (value: Value) => void,
+  context: ClassSetterDecoratorContext<This, Value> & ContextConstraints,
+) => void | ((value: Value) => void);
+/**
+ * Returns a setter decorator to apply parameter decorators to its parameter.
+ *
+ * This overload is meant to be used with explicit type arguments, for when type inference fails to correctly infer the return type.
+ *
+ * @template Value The type of the parameter
+ * @template This The type on which the setter will be defined.
+ * @template ContextConstraints Constraints applied to the decorator context
+ * @param name The name of the parameter, to make it available to parameter decorators in their {@linkplain ClassMethodParameterDecoratorContext.name context}
+ * @param decorators The parameter decorators to apply to the setter's parameter
+ */
+export declare function parameter<
+  Value,
+  This = unknown,
+  ContextConstraints extends {
+    name?: string | symbol | undefined;
+    static?: boolean | undefined;
+    private?: boolean | undefined;
+  } = {
+    name?: string | symbol | undefined;
+    static?: boolean | undefined;
+    private?: boolean | undefined;
+  },
+>(
+  name: string,
+  ...decorators: _ClassMethodParameterDecorator<
+    NoInfer<This>,
+    NoInfer<Value>,
+    string,
+    false,
+    { kind: "setter" } & NoInfer<ContextConstraints>
+  >[]
+): (
+  value: (value: Value) => void,
+  context: ClassSetterDecoratorContext<This, Value> & ContextConstraints,
+) => void | ((value: Value) => void);
+/**
+ * Returns a setter decorator to apply parameter decorators to its parameter.
+ *
+ * This overload is meant to be used with explicit type arguments, for when type inference fails to correctly infer the return type.
+ *
+ * @template Value The type of the parameter
+ * @template This The type on which the setter will be defined.
+ * @template ContextConstraints Constraints applied to the decorator context
+ * @param decorators The parameter decorators to apply to the setter's parameter
+ * @param decorators.name The name of the parameter, to make it available to parameter decorators in their {@linkplain ClassMethodParameterDecoratorContext.name context}
+ * @param decorators.decorators The parameter decorators to apply to the setter's parameter
+ */
+export declare function parameter<
+  Value,
+  This = unknown,
+  ContextConstraints extends {
+    name?: string | symbol | undefined;
+    static?: boolean | undefined;
+    private?: boolean | undefined;
+  } = {
+    name?: string | symbol | undefined;
+    static?: boolean | undefined;
+    private?: boolean | undefined;
+  },
+>(decorators: {
+  name: string;
+  decorators: _ClassMethodParameterDecorator<
+    NoInfer<This>,
+    NoInfer<Value>,
+    string,
+    false,
+    { kind: "setter" } & NoInfer<ContextConstraints>
+  >[];
+}): (
+  value: (value: Value) => void,
+  context: ClassSetterDecoratorContext<This, Value> & ContextConstraints,
+) => void | ((value: Value) => void);
+/**
+ * Returns a setter decorator to apply parameter decorators to its parameter.
+ *
+ * This overload is meant to be used with explicit type arguments, for when type inference fails to correctly infer the return type.
+ *
+ * @template Value The type of the parameter
+ * @template This The type on which the setter will be defined.
+ * @template ContextConstraints Constraints applied to the decorator context
+ * @param decorators The parameter decorators to apply to the setter's parameter
+ * @param decorators.decorators The parameter decorators to apply to the setter's parameter
+ */
+export declare function parameter<
+  Value,
+  This = unknown,
+  ContextConstraints extends {
+    name?: string | symbol | undefined;
+    static?: boolean | undefined;
+    private?: boolean | undefined;
+  } = {
+    name?: string | symbol | undefined;
+    static?: boolean | undefined;
+    private?: boolean | undefined;
+  },
+>(decorators: {
+  name?: undefined;
+  decorators: _ClassMethodParameterDecorator<
+    NoInfer<This>,
+    NoInfer<Value>,
+    undefined,
+    false,
+    { kind: "setter" } & NoInfer<ContextConstraints>
+  >[];
+}): (
+  value: (value: Value) => void,
+  context: ClassSetterDecoratorContext<This, Value> & ContextConstraints,
 ) => void | ((value: Value) => void);
 
 /**
@@ -562,7 +889,8 @@ export declare function optional<
     unknown,
     any,
     string | undefined,
-    false
+    false,
+    unknown
   >[],
 >(
   ...decorators: Decorators
@@ -573,13 +901,57 @@ export declare function optional<
   > &
     _ExtractContext<Decorators>,
 ) => void | ((value: unknown) => undefined | _ExtractParameter<Decorators>);
+/**
+ * Returns a parameter decorator that conditionally _applies_ a set of parameter decorators only to non-`undefined` parameter values.
+ *
+ * The decorators themselves are called when the class is initialized, but the function they return will only be called (when the annotated method is invoked) when the corresponding value is not `undefined`.
+ *
+ * To apply the decorators unconditionally, but never let them see an `undefined` value, use the {@link defaultValue} decorator instead.
+ *
+ * This overload is meant to be used with explicit type arguments, for when type inference fails to correctly infer the return type.
+ *
+ * @template Value The type of the parameter
+ * @template This The type on which the class element will be defined.
+ * @template ContextConstraints Constraints applied to the decorator context
+ * @param decorators The parameter decorators to be optionally _applied_.
+ */
+export declare function optional<
+  Value,
+  This = unknown,
+  ContextConstraints extends {
+    kind?: "class" | "method" | "setter" | undefined;
+    name?: string | symbol | undefined;
+    static?: boolean | undefined;
+    private?: boolean | undefined;
+  } = {
+    kind?: "class" | "method" | "setter" | undefined;
+    name?: string | symbol | undefined;
+    static?: boolean | undefined;
+    private?: boolean | undefined;
+  },
+>(
+  ...decorators: _ClassMethodParameterDecorator<
+    NoInfer<This>,
+    NoInfer<Value>,
+    string | undefined,
+    false,
+    NoInfer<ContextConstraints>
+  >[]
+): (
+  target: undefined,
+  context: ClassMethodParameterDecoratorContext<This> & {
+    rest: false;
+    function: ContextConstraints;
+  },
+) => void | ((value: Value) => Value);
 
 type _ExtractContext<
   Decorators extends _ClassMethodParameterDecorator<
     unknown,
     any,
     never,
-    never
+    never,
+    unknown
   >[],
 > = _UnionToIntersection<
   {
@@ -597,7 +969,8 @@ export declare function rest<
     unknown,
     any,
     string | undefined,
-    false
+    false,
+    unknown
   >[],
 >(
   ...decorators: Decorators
@@ -610,3 +983,42 @@ export declare function rest<
       rest: true;
     },
 ) => void | ((value: unknown) => _ExtractParameter<Decorators>[]);
+/**
+ * Returns a parameter decorator that applies a set of decorators to each value of a `...` rest parameter, rather than those values as an array.
+ *
+ * This overload is meant to be used with explicit type arguments, for when type inference fails to correctly infer the return type.
+ *
+ * @template Value The type of the parameter
+ * @template This The type on which the class element will be defined.
+ * @template ContextConstraints Constraints applied to the decorator context
+ * @param decorators The parameter decorators to apply to all the rest argument values.
+ */
+export declare function rest<
+  Value,
+  This = unknown,
+  ContextConstraints extends {
+    kind?: "class" | "method" | "setter" | undefined;
+    name?: string | symbol | undefined;
+    static?: boolean | undefined;
+    private?: boolean | undefined;
+  } = {
+    kind?: "class" | "method" | "setter" | undefined;
+    name?: string | symbol | undefined;
+    static?: boolean | undefined;
+    private?: boolean | undefined;
+  },
+>(
+  ...decorators: _ClassMethodParameterDecorator<
+    NoInfer<This>,
+    NoInfer<Value>,
+    string | undefined,
+    false,
+    NoInfer<ContextConstraints>
+  >[]
+): (
+  target: undefined,
+  context: ClassMethodParameterDecoratorContext<This> & {
+    rest: true;
+    function: ContextConstraints;
+  },
+) => void | ((value: Value) => Value);

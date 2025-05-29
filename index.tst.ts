@@ -36,6 +36,129 @@ declare function logged<This>(
 ): void;
 
 describe("parameters", () => {
+  describe("explicit typing", () => {
+    test("parameter length", () => {
+      expect(parameters<[string]>(string)).type.not.toRaiseError();
+      expect(
+        parameters<[number, string]>(double, string),
+      ).type.not.toRaiseError();
+      // Useless but not illegal
+      expect(parameters<[]>()).type.not.toRaiseError();
+      // Should ideally error as missing an argument, but type arguments also match other overloads
+      expect(parameters<[], string>()).type.not.toRaiseError();
+
+      expect(
+        parameters<[], string>([true, stringArray]),
+      ).type.not.toRaiseError();
+      expect(
+        parameters<[number], string>(double, [true, stringArray]),
+      ).type.not.toRaiseError();
+
+      expect(parameters<[]>(double)).type.toRaiseError(
+        `Expected 0 arguments, but got 1.`,
+      );
+      expect(parameters<[number, string]>(double)).type.toRaiseError(
+        `Expected 2 arguments, but got 1.`,
+      );
+
+      expect(
+        parameters<[], string>(string, [true, stringArray]),
+      ).type.toRaiseError(`Expected 1 arguments, but got 2.`);
+      expect(
+        parameters<[number], string>([true, stringArray]),
+      ).type.toRaiseError();
+      expect(
+        parameters<[number], string>(double, string, [true, stringArray]),
+      ).type.toRaiseError(`Expected 2 arguments, but got 3.`);
+
+      @(expect(
+        parameters<[boolean, number, number, string]>(
+          boolean,
+          double,
+          long,
+          string,
+        ),
+      ).type.toBeApplicable)
+      @(expect(parameters<[boolean, number, number]>(boolean, double, long))
+        .type.toBeApplicable)
+      @(expect(parameters<[boolean, number]>(boolean, double)).type
+        .toBeApplicable)
+      @(expect(parameters<[boolean]>(boolean)).type.toBeApplicable)
+      @(expect(parameters<[]>()).type.toBeApplicable)
+      class Sut {
+        constructor(a: boolean, b: number, c: number, d: string) {}
+
+        @(expect(
+          parameters<[boolean, number, number, string]>(
+            boolean,
+            double,
+            long,
+            string,
+          ),
+        ).type.toBeApplicable)
+        @(expect(parameters<[boolean, number, number]>(boolean, double, long))
+          .type.toBeApplicable)
+        @(expect(parameters<[boolean, number]>(boolean, double)).type
+          .toBeApplicable)
+        @(expect(parameters<[boolean]>(boolean)).type.toBeApplicable)
+        @(expect(parameters<[]>()).type.toBeApplicable)
+        // FIXME: too many
+        // @(expect(
+        //   parameters<[boolean, number, number, string, any]>(
+        //     boolean,
+        //     double,
+        //     long,
+        //     string,
+        //     logged,
+        //   ),
+        // ).type.not.toBeApplicable)
+        fn(a: boolean, b: number, c: number, d: string) {}
+      }
+    });
+    test("various forms", () => {
+      expect(
+        parameters<[boolean, number, number, string]>(
+          [boolean],
+          ["d", double],
+          [false, long],
+          ["s", false, string],
+        ),
+      ).type.not.toRaiseError();
+      expect(
+        parameters<[boolean, number, number, string]>(
+          { decorators: [boolean] },
+          { name: "d", decorators: [double] },
+          { rest: false, decorators: [long] },
+          { name: "s", rest: false, decorators: [string] },
+        ),
+      ).type.not.toRaiseError();
+      expect(
+        parameters<[boolean, number, number, string]>(
+          boolean,
+          { name: "d", decorators: [double] },
+          [false, long],
+          { name: "s", rest: false, decorators: [string] },
+        ),
+      ).type.not.toRaiseError();
+    });
+    test("types", () => {
+      expect(parameters<[string]>(string)).type.not.toRaiseError();
+      expect(
+        parameters<[number, string]>(double, string),
+      ).type.not.toRaiseError();
+
+      expect(parameters<[string]>(double)).type.toRaiseError(
+        `Type 'string' is not assignable to type 'number'.`,
+      );
+      expect(parameters<[number, string]>(double, double)).type.toRaiseError(
+        `Type 'string' is not assignable to type 'number'.`,
+      );
+
+      expect(parameters<[], string>(stringArray)).type.toRaiseError(
+        "not assignable to parameter of type",
+      );
+    });
+  });
   describe("class", () => {
     test("parameter length", () => {
       @(expect(parameters(boolean, double, long, string)).type.toBeApplicable)
@@ -153,6 +276,30 @@ describe("parameters", () => {
 });
 
 describe("parameter", () => {
+  test("explicit typing", () => {
+    expect(parameter<string>(string)).type.not.toRaiseError();
+    expect(parameter<string>("name", string)).type.not.toRaiseError();
+    expect(parameter<string>({ decorators: [string] })).type.not.toRaiseError();
+    expect(
+      parameter<string>({ name: "name", decorators: [string] }),
+    ).type.not.toRaiseError();
+    expect(parameter<string>(string, logged)).type.not.toRaiseError();
+    // Useless but not illegal
+    expect(parameter<string>()).type.not.toRaiseError();
+
+    expect(parameter<string>(double)).type.toRaiseError();
+    expect(parameter<string>(string, double)).type.toRaiseError();
+    expect(parameter<string>("name", double)).type.toRaiseError();
+    expect(parameter<string>({ decorators: [double] })).type.toRaiseError();
+
+    class Sut {
+      @(expect(parameter<boolean>()).type.toBeApplicable)
+      @(expect(parameter<any, unknown, any>()).type.toBeApplicable)
+      @(expect(parameter<unknown>()).type.not.toBeApplicable)
+      @(expect(parameter<string>()).type.not.toBeApplicable)
+      set prop(p: boolean) {}
+    }
+  });
   test("static", () => {
     class Sut {
       @(expect(parameter(boolean)).type.toBeApplicable)
@@ -203,9 +350,29 @@ describe("parameter", () => {
 });
 
 test("rest", () => {
+  expect(rest<string>()).type.not.toRaiseError();
+  expect(rest<string>(string)).type.not.toRaiseError();
+  expect(rest<string>(string, logged)).type.not.toRaiseError();
+
   expect(parameters).type.toBeCallableWith(double, [true, rest(string)]);
   expect(parameters).type.not.toBeCallableWith(double, rest(string));
   expect(parameters).type.not.toBeCallableWith(double, [false, rest(string)]);
+
+  expect(
+    parameters<[number], string>(double, [true, rest(string)]),
+  ).type.not.toRaiseError();
+  expect(
+    parameters<[number], string>(double, rest(string)),
+  ).type.toRaiseError();
+  expect(
+    parameters<[number, string]>(double, rest(string)),
+  ).type.toRaiseError();
+  expect(
+    parameters<[number], string>(double, [false, rest(string)]),
+  ).type.toRaiseError();
+  expect(
+    parameters<[number, string]>(double, [false, rest(string)]),
+  ).type.toRaiseError();
 
   @(expect(parameters(double, [true, rest(string)])).type.toBeApplicable)
   @(expect(parameters(double, ["b", true, rest(string)])).type.toBeApplicable)
@@ -320,6 +487,29 @@ declare function memberPrivate(
 ): void;
 
 describe("constrained applicability", () => {
+  test("explicit typing", () => {
+    expect(
+      parameters<
+        [string],
+        unknown,
+        { kind: "class" | "method"; name?: string | symbol | undefined }
+      >(string),
+    ).type.not.toRaiseError();
+    expect(
+      parameters<
+        [string],
+        unknown,
+        { kind: "class"; name: string | undefined }
+      >(string),
+    ).type.not.toRaiseError();
+    expect(
+      parameters<
+        [string],
+        unknown,
+        { kind: "method"; name: string | symbol; static: false; private: false }
+      >(string),
+    ).type.not.toRaiseError();
+  });
   test("rest", () => {
     expect(parameters).type.toBeCallableWith(onlyNonRest);
     expect(parameters).type.toBeCallableWith(["name", onlyNonRest]);
@@ -352,6 +542,15 @@ describe("constrained applicability", () => {
       rest: false,
       decorators: [onlyRest],
     });
+
+    expect(parameters<[string]>(onlyNonRest)).type.not.toRaiseError();
+    expect(parameters<[], string>([true, onlyNonRest])).type.toRaiseError(
+      `Types of property 'rest' are incompatible.`,
+    );
+    expect(parameters<[], string>([true, onlyRest])).type.not.toRaiseError();
+    expect(parameters<[string]>(onlyRest)).type.toRaiseError(
+      "Types of property 'rest' are incompatible.",
+    );
   });
 
   test("named", () => {
@@ -373,13 +572,74 @@ describe("constrained applicability", () => {
       rest: true,
       decorators: [named],
     });
+
+    expect(parameters<[string]>(["name", named])).type.not.toRaiseError();
+    expect(parameters<[string]>(named)).type.toRaiseError(
+      "Types of property 'name' are incompatible.",
+    );
+    expect(
+      parameters<[], string>(["name", true, named]),
+    ).type.not.toRaiseError();
+    expect(parameters<[], string>([true, named])).type.toRaiseError(
+      "Types of property 'name' are incompatible.",
+    );
   });
 
   test("function.kind", () => {
+    expect(parameters<[string]>(onlyClass)).type.toRaiseError(
+      "The types of 'function.kind' are incompatible between these types.",
+    );
+    expect(
+      parameters<[unknown], unknown, { kind: "class" }>(onlyClass),
+    ).type.not.toRaiseError();
+    expect(
+      parameters<[unknown], unknown, { kind: "method" }>(onlyClass),
+    ).type.toRaiseError(
+      "The types of 'function.kind' are incompatible between these types.",
+    );
+    expect(parameters<[string]>(onlyMethod)).type.toRaiseError(
+      "The types of 'function.kind' are incompatible between these types.",
+    );
+    expect(
+      parameters<[unknown], unknown, { kind: "method" }>(onlyMethod),
+    ).type.not.toRaiseError();
+    expect(
+      parameters<[unknown], unknown, { kind: "class" }>(onlyMethod),
+    ).type.toRaiseError(
+      "The types of 'function.kind' are incompatible between these types.",
+    );
+    expect(parameters<[unknown]>(onlySetter)).type.toRaiseError(
+      "The types of 'function.kind' are incompatible between these types.",
+    );
+    expect(parameters<[string]>(onlyMember)).type.toRaiseError(
+      "The types of 'function.kind' are incompatible between these types.",
+    );
+    expect(
+      parameters<[unknown], unknown, { kind: "method" }>(onlyMember),
+    ).type.not.toRaiseError();
+    expect(
+      parameters<[unknown], unknown, { kind: "class" }>(onlyMember),
+    ).type.toRaiseError(
+      "The types of 'function.kind' are incompatible between these types.",
+    );
+
+    expect(parameter(onlyClass)).type.toRaiseError(
+      "No overload matches this call.",
+    );
+    expect(parameter(onlyMethod)).type.toRaiseError(
+      "No overload matches this call.",
+    );
+    expect(parameter(onlySetter)).type.not.toRaiseError();
+    expect(parameter<string>(onlySetter)).type.not.toRaiseError();
+    expect(parameter(onlyMember)).type.not.toRaiseError();
+    expect(parameter<string>(onlyMember)).type.not.toRaiseError();
+
     @(expect(parameters(onlyClass)).type.toBeApplicable)
     @(expect(parameters(onlyMethod)).type.not.toBeApplicable)
     @(expect(parameters(onlySetter)).type.not.toBeApplicable)
     @(expect(parameters(onlyMember)).type.not.toBeApplicable)
+    @(expect(parameters<[string], unknown, { kind: "class" }>(onlyClass)).type
+      .toBeApplicable)
     class C {
       constructor(a: string) {}
 
@@ -387,64 +647,179 @@ describe("constrained applicability", () => {
       @(expect(parameters(onlyMethod)).type.toBeApplicable)
       @(expect(parameters(onlySetter)).type.not.toBeApplicable)
       @(expect(parameters(onlyMember)).type.toBeApplicable)
+      @(expect(parameters<[string], unknown, { kind: "method" }>(onlyMethod))
+        .type.toBeApplicable)
+      @(expect(parameters<[string], unknown, { kind: "method" }>(onlyMember))
+        .type.toBeApplicable)
       fn(a: string) {}
 
-      @(expect(parameter(onlyClass)).type.not.toBeApplicable)
-      @(expect(parameter(onlyMethod)).type.not.toBeApplicable)
       @(expect(parameter(onlySetter)).type.toBeApplicable)
       @(expect(parameter(onlyMember)).type.toBeApplicable)
+      @(expect(parameter<string>(onlySetter)).type.toBeApplicable)
+      @(expect(parameter<string>(onlyMember)).type.toBeApplicable)
       set prop(value: string) {}
     }
   });
 
   test("function.static", () => {
+    // FIXME:
+    // expect(parameters<[unknown]>(memberNonStatic)).type.toRaiseError()
+    // expect(parameters<[unknown]>(memberStatic)).type.toRaiseError()
+    expect(
+      parameters<[unknown], unknown, { static: false }>(memberNonStatic),
+    ).type.not.toRaiseError();
+    expect(
+      parameters<[unknown], unknown, { static: true }>(memberNonStatic),
+    ).type.toRaiseError(
+      "The types of 'function.static' are incompatible between these types.",
+    );
+    expect(
+      parameters<[unknown], unknown, { static: true }>(memberStatic),
+    ).type.not.toRaiseError();
+    expect(
+      parameters<[unknown], unknown, { static: false }>(memberStatic),
+    ).type.toRaiseError(
+      "The types of 'function.static' are incompatible between these types.",
+    );
+
+    expect(
+      parameter<unknown, unknown, { static: false }>(memberNonStatic),
+    ).type.not.toRaiseError();
+    expect(
+      parameter<unknown, unknown, { static: true }>(memberNonStatic),
+    ).type.toRaiseError("No overload matches this call.");
+    expect(
+      parameter<unknown, unknown, { static: true }>(memberStatic),
+    ).type.not.toRaiseError();
+    expect(
+      parameter<unknown, unknown, { static: false }>(memberStatic),
+    ).type.toRaiseError("No overload matches this call.");
+
     @(expect(parameters(memberNonStatic)).type.toBeApplicable)
     @(expect(parameters(memberStatic)).type.toBeApplicable)
     @(expect(parameters([onlyMember, memberNonStatic])).type.not.toBeApplicable)
     @(expect(parameters([onlyMember, memberStatic])).type.not.toBeApplicable)
+    // FIXME:
+    // @(expect(parameters<[string], unknown, { static: false }>(memberNonStatic))
+    //   .not.type.toBeApplicable)
+    // @(expect(parameters<[string], unknown, { static: true }>(memberStatic)).type
+    //   .not.toBeApplicable)
     class C {
       constructor(a: string) {}
 
       @(expect(parameters(memberNonStatic)).type.toBeApplicable)
       @(expect(parameters(memberStatic)).type.not.toBeApplicable)
+      @(expect(
+        parameters<[string], unknown, { static: false }>(memberNonStatic),
+      ).type.toBeApplicable)
+      @(expect(parameters<[string], unknown, { static: true }>(memberStatic))
+        .type.not.toBeApplicable)
       fn(a: string) {}
 
       @(expect(parameter(memberNonStatic)).type.toBeApplicable)
       @(expect(parameter(memberStatic)).type.not.toBeApplicable)
+      @(expect(parameter<string, unknown, { static: false }>(memberNonStatic))
+        .type.toBeApplicable)
+      @(expect(parameter<string, unknown, { static: true }>(memberStatic)).type
+        .not.toBeApplicable)
       set prop(value: string) {}
 
       @(expect(parameters(memberNonStatic)).type.not.toBeApplicable)
       @(expect(parameters(memberStatic)).type.toBeApplicable)
+      // FIXME:
+      // @(expect(
+      //   parameters<[string], unknown, { static: false }>(memberNonStatic),
+      // ).type.not.toBeApplicable)
+      @(expect(parameters<[string], unknown, { static: true }>(memberStatic))
+        .type.toBeApplicable)
       static fn(a: string) {}
 
       @(expect(parameter(memberNonStatic)).type.not.toBeApplicable)
       @(expect(parameter(memberStatic)).type.toBeApplicable)
+      @(expect(parameter<string, unknown, { static: false }>(memberNonStatic))
+        .type.not.toBeApplicable)
+      @(expect(parameter<string, unknown, { static: true }>(memberStatic)).type
+        .toBeApplicable)
       static set prop(value: string) {}
     }
   });
 
   test("function.private", () => {
+    // FIXME:
+    // expect(parameters<[unknown]>(memberPublic)).type.toRaiseError()
+    // expect(parameters<[unknown]>(memberPrivate)).type.toRaiseError()
+    expect(
+      parameters<[unknown], unknown, { private: false }>(memberPublic),
+    ).type.not.toRaiseError();
+    expect(
+      parameters<[unknown], unknown, { private: true }>(memberPublic),
+    ).type.toRaiseError(
+      "The types of 'function.private' are incompatible between these types.",
+    );
+    expect(
+      parameters<[unknown], unknown, { private: true }>(memberPrivate),
+    ).type.not.toRaiseError();
+    expect(
+      parameters<[unknown], unknown, { private: false }>(memberPrivate),
+    ).type.toRaiseError(
+      "The types of 'function.private' are incompatible between these types.",
+    );
+
+    expect(
+      parameter<unknown, unknown, { private: false }>(memberPublic),
+    ).type.not.toRaiseError();
+    expect(
+      parameter<unknown, unknown, { private: true }>(memberPublic),
+    ).type.toRaiseError("No overload matches this call.");
+    expect(
+      parameter<unknown, unknown, { private: true }>(memberPrivate),
+    ).type.not.toRaiseError();
+    expect(
+      parameter<unknown, unknown, { private: false }>(memberPrivate),
+    ).type.toRaiseError("No overload matches this call.");
+
     @(expect(parameters(memberPublic)).type.toBeApplicable)
     @(expect(parameters(memberPrivate)).type.toBeApplicable)
     @(expect(parameters([onlyMember, memberPublic])).type.not.toBeApplicable)
     @(expect(parameters([onlyMember, memberPrivate])).type.not.toBeApplicable)
+    // FIXME:
+    // @(expect(parameters<[string], unknown, { private: false }>(memberPublic))
+    //   .type.not.toBeApplicable)
+    // @(expect(parameters<[string], unknown, { private: true }>(memberPrivate))
+    //   .type.not.toBeApplicable)
     class C {
       constructor(a: string) {}
 
       @(expect(parameters(memberPublic)).type.toBeApplicable)
       @(expect(parameters(memberPrivate)).type.not.toBeApplicable)
+      @(expect(parameters<[string], unknown, { private: false }>(memberPublic))
+        .type.toBeApplicable)
+      @(expect(parameters<[string], unknown, { private: true }>(memberPrivate))
+        .type.not.toBeApplicable)
       fn(a: string) {}
 
       @(expect(parameter(memberPublic)).type.toBeApplicable)
       @(expect(parameter(memberPrivate)).type.not.toBeApplicable)
+      @(expect(parameter<string, unknown, { private: false }>(memberPublic))
+        .type.toBeApplicable)
+      @(expect(parameter<string, unknown, { private: true }>(memberPrivate))
+        .type.not.toBeApplicable)
       set prop(value: string) {}
 
       @(expect(parameters(memberPublic)).type.not.toBeApplicable)
       @(expect(parameters(memberPrivate)).type.toBeApplicable)
+      @(expect(parameters<[string], unknown, { private: false }>(memberPublic))
+        .type.not.toBeApplicable)
+      @(expect(parameters<[string], unknown, { private: true }>(memberPrivate))
+        .type.toBeApplicable)
       #fn(a: string) {}
 
       @(expect(parameter(memberPublic)).type.not.toBeApplicable)
       @(expect(parameter(memberPrivate)).type.toBeApplicable)
+      @(expect(parameter<string, unknown, { private: false }>(memberPublic))
+        .type.not.toBeApplicable)
+      @(expect(parameter<string, unknown, { private: true }>(memberPrivate))
+        .type.toBeApplicable)
       set #prop(value: string) {}
     }
   });
