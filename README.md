@@ -112,3 +112,33 @@ new Cls().method();
 // The A and B decorators will be called with the 42 value
 new Cls().method(42);
 ```
+
+## TypeScript
+
+Type inference should work in most cases, infering e.g. the method signature the decorator can be applied to from the parameter decorators (inference taking into account the parameter types of course, but also restrictions on the annotated method: its name, or whether it must static and/or private; as well as the containing class' shape, inferred from the decorators' context parameter).
+There are exceptions though, notably as soon as a parameter decorator has overloads (due to a design limitation of TypeScript in this case).
+To cope for those cases, the exported functions have overloads designed for explicit typing.
+You must then pass parameter types as type arguments, and can also pass the containing class' shape and method description as additional type arguments to check that the parameter decorators are used correctly.
+
+```ts
+class Cls {
+  @parameters<[number, boolean, string]>(A, B, C)
+  fn(a: number, b: boolean, c: string) {}
+
+  @parameters<[number, boolean], string>(A, B, [true, C])
+  variadic(a: number, b: boolean, ...rest: string[]) {}
+
+  @parameter<string>(C)
+  set prop(value: string) {}
+
+  // A "full" declaration could be:
+  @parameters<
+    [number], // ← non-variadic parameters
+    string, // ← rest parameter
+    Cls, // ← containing class
+    // ↓ method description
+    { kind: "method"; name: "m"; private: false; static: false }
+  >(A, [true, C])
+  m(a: number, ...rest: string[]) {}
+}
+```
