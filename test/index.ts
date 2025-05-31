@@ -72,6 +72,66 @@ void suite("parameters", () => {
     ]);
   });
 
+  void test("abstract class", () => {
+    const RECORDED_DATA = Symbol();
+    function record<Value>(
+      _: undefined,
+      context: ClassMethodParameterDecoratorContext,
+    ) {
+      assert.equal(context.kind, "parameter");
+      assert.deepEqual(context.function, { kind: "class", name: "Sut" });
+      const { name, index, rest } = context;
+      (((context.metadata[RECORDED_DATA] as Pick<
+        ClassMethodParameterDecoratorContext,
+        "name" | "index" | "rest"
+      >[][]) ??= [])[index] ??= []).push({ name, index, rest });
+
+      return function (this: unknown, value: Value) {
+        assert.equal(this, undefined);
+        (Sut[RECORDED_DATA][index] ??= []).push(value);
+        return value;
+      };
+    }
+
+    @parameters(
+      [record, record],
+      ["b", record],
+      [false, record],
+      ["d", true, record],
+    )
+    abstract class Sut {
+      static [RECORDED_DATA]: any[][] = [];
+      constructor(a: string, b: number, c: boolean, ...d: string[]) {
+        Sut[RECORDED_DATA][0].push(a);
+        Sut[RECORDED_DATA][1].push(b);
+        Sut[RECORDED_DATA][2].push(c);
+        Sut[RECORDED_DATA][3].push(d);
+      }
+    }
+
+    assert.deepEqual(Sut[Symbol.metadata]![RECORDED_DATA], [
+      [
+        { name: undefined, index: 0, rest: false },
+        { name: undefined, index: 0, rest: false },
+      ],
+      [{ name: "b", index: 1, rest: false }],
+      [{ name: undefined, index: 2, rest: false }],
+      [{ name: "d", index: 3, rest: true }],
+    ]);
+
+    class Sub extends Sut {}
+    new Sub("a", 42, true, "foo", "bar", "baz");
+    assert.deepEqual(Sut[RECORDED_DATA], [
+      ["a", "a", "a"],
+      [42, 42],
+      [true, true],
+      [
+        ["foo", "bar", "baz"],
+        ["foo", "bar", "baz"],
+      ],
+    ]);
+  });
+
   void test("method", () => {
     const RECORDED_DATA = Symbol();
     function record<This extends { [RECORDED_DATA]: any[][] }, Value>(
