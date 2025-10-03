@@ -23,8 +23,7 @@
   "main": "index.js",
   "types": "index.d.ts",
   "files": [
-    "index.js",
-    "index.d.ts"
+    "index.{js,d.ts}"
   ],
   "scripts": {
     "format": "wireit",
@@ -41,7 +40,7 @@
     "@babel/plugin-syntax-typescript": "^7.25.9",
     "@types/node": "^24.0.1",
     "eslint": "^9.25.0",
-    "eslint-plugin-package-json": "^0.54.0",
+    "eslint-plugin-package-json": "^0.56.3",
     "prettier": "^3.5.3",
     "tstyche": "^4.0.0",
     "typescript": "^5.8.3",
