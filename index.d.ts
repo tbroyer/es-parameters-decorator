@@ -66,10 +66,10 @@ export interface ClassMethodParameterDecoratorContext<This = unknown> {
 export declare function parameters<
   Decorators extends _NonRestClassMethodParameterDecorators[],
   This extends _ExtractThis<Decorators> = _ExtractThis<Decorators>,
-  Parameters extends
-    _ExtractParameters<Decorators> = _ExtractParameters<Decorators>,
-  ContextConstraints extends
-    _ExtractContextConstraints<Decorators> = _ExtractContextConstraints<Decorators>,
+  Parameters extends _ExtractParameters<Decorators> =
+    _ExtractParameters<Decorators>,
+  ContextConstraints extends _ExtractContextConstraints<Decorators> =
+    _ExtractContextConstraints<Decorators>,
 >(
   ...decorators: Decorators
 ): {
@@ -617,7 +617,8 @@ export declare function parameter<
     { kind: "setter" }
   >[],
   ContextConstraints extends
-    _ExtractContextConstraintsFromDecorators<Decorators> = _ExtractContextConstraintsFromDecorators<Decorators>,
+    _ExtractContextConstraintsFromDecorators<Decorators> =
+    _ExtractContextConstraintsFromDecorators<Decorators>,
 >(
   ...decorators: Decorators
 ): <Value extends _ExtractParameter<Decorators>>(
@@ -643,7 +644,8 @@ export declare function parameter<
     { kind: "setter" }
   >[],
   ContextConstraints extends
-    _ExtractContextConstraintsFromDecorators<Decorators> = _ExtractContextConstraintsFromDecorators<Decorators>,
+    _ExtractContextConstraintsFromDecorators<Decorators> =
+    _ExtractContextConstraintsFromDecorators<Decorators>,
 >(
   name: string,
   ...decorators: Decorators
@@ -671,7 +673,8 @@ export declare function parameter<
     { kind: "setter" }
   >[],
   ContextConstraints extends
-    _ExtractContextConstraintsFromDecorators<Decorators> = _ExtractContextConstraintsFromDecorators<Decorators>,
+    _ExtractContextConstraintsFromDecorators<Decorators> =
+    _ExtractContextConstraintsFromDecorators<Decorators>,
 >(decorators: {
   name: string;
   decorators: Decorators;
@@ -698,7 +701,8 @@ export declare function parameter<
     { kind: "setter" }
   >[],
   ContextConstraints extends
-    _ExtractContextConstraintsFromDecorators<Decorators> = _ExtractContextConstraintsFromDecorators<Decorators>,
+    _ExtractContextConstraintsFromDecorators<Decorators> =
+    _ExtractContextConstraintsFromDecorators<Decorators>,
 >(decorators: {
   name?: undefined;
   decorators: Decorators;
