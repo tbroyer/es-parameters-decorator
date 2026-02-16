@@ -38,13 +38,14 @@
     "@babel/core": "^7.26.10",
     "@babel/plugin-proposal-decorators": "^7.25.9",
     "@babel/plugin-syntax-typescript": "^7.25.9",
+    "@eslint/js": "^10.0.1",
     "@types/node": "^25.0.3",
-    "eslint": "^9.25.0",
+    "eslint": "^10.0.0",
     "eslint-plugin-package-json": "^0.88.1",
     "prettier": "^3.5.3",
     "tstyche": "^6.0.0",
     "typescript": "^5.8.3",
-    "typescript-eslint": "^8.31.0",
+    "typescript-eslint": "^8.56.0",
     "wireit": "^0.14.12"
   },
   "wireit": {
