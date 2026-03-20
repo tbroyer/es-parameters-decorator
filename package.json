@@ -42,7 +42,7 @@
     "@eslint/js": "^10.0.1",
     "@types/node": "^25.2.3",
     "eslint": "^10.0.0",
-    "eslint-plugin-package-json": "^0.90.1",
+    "eslint-plugin-package-json": "^0.91.0",
     "prettier": "^3.8.1",
     "tstyche": "^6.2.0",
     "typescript": "^5.9.3",
