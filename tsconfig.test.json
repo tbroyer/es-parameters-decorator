@@ -4,8 +4,6 @@
   "compilerOptions": {
     "rootDir": "test/",
     "outDir": "test-typescript",
-    "sourceMap": true,
-    "target": "ES2024",
-    "lib": ["ESNext"]
+    "sourceMap": true
   }
 }

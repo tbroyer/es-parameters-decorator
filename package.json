@@ -45,7 +45,7 @@
     "eslint-plugin-package-json": "^0.91.0",
     "prettier": "^3.8.1",
     "tstyche": "^7.0.0",
-    "typescript": "^5.9.3",
+    "typescript": "^6.0.2",
     "typescript-eslint": "^8.56.0",
     "wireit": "^0.14.12"
   },

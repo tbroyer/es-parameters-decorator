@@ -1,8 +1,7 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "NodeNext",
-    "strict": true,
+    "types": ["node"],
+    "lib": ["esnext"],
     "verbatimModuleSyntax": true,
     "forceConsistentCasingInFileNames": true
   }
