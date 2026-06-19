@@ -35,7 +35,7 @@
     "test:types": "wireit"
   },
   "devDependencies": {
-    "@babel/cli": "^7.28.6",
+    "@babel/cli": "^8.0.1",
     "@babel/core": "^7.29.0",
     "@babel/plugin-proposal-decorators": "^7.29.0",
     "@babel/plugin-syntax-typescript": "^7.28.6",
