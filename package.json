@@ -41,11 +41,12 @@
     "@babel/plugin-syntax-typescript": "^8.0.1",
     "@eslint/js": "^10.0.1",
     "@types/node": "^26.0.1",
+    "@typescript/native": "npm:typescript@^7.0.2",
     "eslint": "^10.0.0",
     "eslint-plugin-package-json": "^1.1.0",
     "prettier": "^3.8.1",
     "tstyche": "^7.0.0",
-    "typescript": "^6.0.2",
+    "typescript": "npm:@typescript/typescript6@^6.0.2",
     "typescript-eslint": "^8.56.0",
     "wireit": "^0.14.12"
   },
