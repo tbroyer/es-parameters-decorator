@@ -48,7 +48,7 @@
     "tstyche": "^7.0.0",
     "typescript": "npm:@typescript/typescript6@^6.0.2",
     "typescript-eslint": "^8.56.0",
-    "wireit": "^0.14.12"
+    "wireit": "^0.15.0"
   },
   "wireit": {
     "format": {
